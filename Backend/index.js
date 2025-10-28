@@ -1,17 +1,17 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./config/db');
+const db = require('./src/config/db');
 
 // Import scheduler
-const { startScheduler } = require('./tasks/scheduler'); 
+const { startScheduler } = require('./src/tasks/scheduler');
 
 // Import routes
-const childRoutes = require('./routes/child.route');
-const dailyReportRoutes = require('./routes/dailyReport.route');
-const monthlyReportRoutes = require('./routes/monthlyReport.route');
-const paymentRoutes = require('./routes/payment.route');
-const userRoutes = require('./routes/user.route');
+const childRoutes = require('./src/routes/child.route');
+const dailyReportRoutes = require('./src/routes/dailyReport.route');
+const monthlyReportRoutes = require('./src/routes/monthlyReport.route');
+const paymentRoutes = require('./src/routes/payment.route');
+const userRoutes = require('./src/routes/user.route');
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -43,7 +43,7 @@ app.use("/api/users", userRoutes);
 startScheduler(); 
 
 // Handler for undefined routes
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({ 
         success: false, 
         message: 'Route not found' 

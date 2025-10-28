@@ -2,6 +2,92 @@ const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../middleware/auth');
 
+// First time setup register (for testing)
+exports.setupAdmin = async (req, res) => {
+    const { name, email, password, phone } = req.body;
+
+    try {
+        // Check if any user already exists in database
+        const userCount = await User.countDocuments();
+        if (userCount > 0) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Setup already completed",
+                error: "First admin already exists. Please use regular register endpoint with admin token."
+            });
+        }
+
+        // Check if email or phone already exists
+        const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+        if (existingUser) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "User with this email or phone already exists" 
+            });
+        }
+
+        // Validate password length
+        if (password.length < 8) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Password must be at least 8 characters long" 
+            });
+        }
+
+        // Hash password before saving to database
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create first admin user in database
+        const user = await User.create({ 
+            name, 
+            email, 
+            password: hashedPassword, 
+            role: 'Admin',
+            phone 
+        });
+
+        // Generate token for immediate login
+        let token;
+        try {
+            token = generateToken({ 
+                userId: user._id, 
+                email: user.email, 
+                role: user.role 
+            });
+        } catch (tokenError) {
+            console.error('Token generation error:', tokenError);
+            return res.status(500).json({ 
+                success: false, 
+                message: "Token generation failed",
+                error: "Check JWT environment variables"
+            });
+        }
+
+        // Return success response with token
+        res.status(201).json({
+            success: true,
+            message: "First admin user created successfully",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (err) {
+        console.error('Setup Admin Error:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            error: err.message 
+        });
+    }
+};
+
 // Register new user - Admin only
 exports.register = async (req, res) => {
     const { name, email, password, role, phone } = req.body;

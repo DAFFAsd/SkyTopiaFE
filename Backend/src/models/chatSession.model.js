@@ -5,7 +5,7 @@ const chatSessionSchema = new mongoose.Schema({
     session_id: { type: String, required: true, unique: true },
     
     messages: [{
-        role: { type: String, enum: ["user", "assistant"], required: true },
+        role: { type: String, enum: ["Pengguna", "Asisten"], required: true },
         content: { type: String, required: true },
         timestamp: { type: Date, default: Date.now }
     }],

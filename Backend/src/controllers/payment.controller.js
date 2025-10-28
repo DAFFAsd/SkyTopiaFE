@@ -1,88 +1,115 @@
 const Payment = require('../models/payment.model');
 const Child = require('../models/child.model');
-const { calculateManualDueDate, checkAndUpdateOverdue } = require('./scheduler');
+const { calculateManualDueDate, checkAndUpdateOverdue } = require('../tasks/scheduler');
 
 // Create new payment - Admin only (manual creation)
 exports.createPayment = async (req, res) => {
     try {
-        const { child_id, amount, due_date, category, period } = req.body;
-        
+        const { child_id, due_date, category, period } = req.body;
+
         // Verify that child exists
         const child = await Child.findById(child_id);
         if (!child) {
             return res.status(400).json({ success: false, message: "Child not found" });
         }
 
-        // Validate amount
-        if (!amount || amount <= 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Amount must be greater than 0" 
+        // Determine amount automatically based on category
+        let amount = 0;
+        switch (category) {
+            case 'Bulanan':
+                amount = child.monthly_fee; // Use monthly fee from child record
+                break;
+            case 'Semester':
+                amount = child.semester_fee; // Use semester fee from child record
+                break;
+            case 'Registrasi':
+                if (!req.body.amount || req.body.amount <= 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Amount is required for registration payments"
+                    });
+                }
+                amount = req.body.amount;
+                break;
+        }
+
+        // Validate that a valid amount was determined
+        if (amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: `No ${category} fee set for this child`
             });
         }
 
-        // Validate category
-        const validCategories = ["Monthly", "Semester", "Registration"];
+        // Validate category is one of the allowed values
+        const validCategories = ["Bulanan", "Semester", "Registrasi"];
         if (category && !validCategories.includes(category)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Invalid category. Must be one of: " + validCategories.join(", ") 
+            return res.status(400).json({
+                success: false,
+                message: "Invalid category"
             });
         }
 
-        // Validate period for semester payments
+        // Validate period requirements based on category
         if (category === 'Semester' && !period) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Period is required for semester payments (format: YYYY-1 or YYYY-2)" 
+            return res.status(400).json({
+                success: false,
+                message: "Period is required for semester payments"
             });
         }
 
-        // Use custom due_date if provided, otherwise calculate for manual creation
+        if (category === 'Bulanan' && !period) {
+            return res.status(400).json({
+                success: false,
+                message: "Period is required for monthly payments"
+            });
+        }
+
+        // Calculate due date
         const finalDueDate = due_date ? new Date(due_date) : calculateManualDueDate(category);
 
-        // Validate due_date is in the future (if provided)
+        // Validate due date is in the future if provided manually
         if (due_date && finalDueDate <= new Date()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Due date must be in the future" 
+            return res.status(400).json({
+                success: false,
+                message: "Due date must be in the future"
             });
         }
 
-        // Check for duplicate payment in same period
+        // Check for duplicate payments in the same period
         if (period) {
             const existingPayment = await Payment.findOne({
                 child_id,
                 period,
                 category
             });
-            
+
             if (existingPayment) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Payment for ${category} period ${period} already exists for this child` 
+                return res.status(400).json({
+                    success: false,
+                    message: `Payment for ${category} period ${period} already exists`
                 });
             }
         }
 
-        // Create new payment
+        // Create the payment record
         const payment = await Payment.create({
             child_id,
             amount,
             due_date: finalDueDate,
             category: category,
             period,
-            status: "Pending"
+            status: "Tertunda"
         });
 
-        // Populate child information for response
+        // Return payment data with child information
         const populatedPayment = await Payment.findById(payment._id)
-            .populate('child_id', 'name birth_date gender');
+            .populate('child_id', 'name birth_date gender monthly_fee semester_fee');
 
-        res.status(201).json({ 
-            success: true, 
-            message: "Payment created successfully", 
-            payment: populatedPayment 
+        res.status(201).json({
+            success: true,
+            message: "Payment created successfully",
+            payment: populatedPayment
         });
 
     } catch (err) {
@@ -95,25 +122,25 @@ exports.getAllPayments = async (req, res) => {
     try {
         // Auto check overdue before fetching data
         await checkAndUpdateOverdue();
-        
+
         const { status, category, child_id, page = 1, limit = 10 } = req.query;
         const filter = {};
-        
+
         // Apply filters if provided
         if (status) filter.status = status;
         if (category) filter.category = category;
         if (child_id) filter.child_id = child_id;
-        
+
         const payments = await Payment.find(filter)
             .populate('child_id', 'name birth_date gender')
             .sort({ due_date: 1 })
             .skip((page - 1) * limit)
             .limit(parseInt(limit));
-            
+
         const total = await Payment.countDocuments(filter);
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             payments,
             pagination: {
                 page: parseInt(page),
@@ -145,7 +172,7 @@ exports.getPaymentsByChildId = async (req, res) => {
         const payments = await Payment.find({ child_id: childId })
             .populate('child_id', 'name birth_date gender')
             .sort({ due_date: 1 });
-        
+
         res.json({ success: true, payments });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -157,7 +184,7 @@ exports.getMyChildPayments = async (req, res) => {
     try {
         // Auto check overdue before fetching data
         await checkAndUpdateOverdue();
-        
+
         // Find all children belonging to the parent
         const myChildren = await Child.find({ parent_id: req.user.userId });
         const childIds = myChildren.map(child => child._id);
@@ -166,7 +193,7 @@ exports.getMyChildPayments = async (req, res) => {
         const payments = await Payment.find({ child_id: { $in: childIds } })
             .populate('child_id', 'name birth_date gender')
             .sort({ due_date: 1 });
-        
+
         res.json({ success: true, payments });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -203,13 +230,11 @@ exports.getPaymentById = async (req, res) => {
 // Submit proof of payment - Parent only (for their own child)
 exports.submitProofOfPayment = async (req, res) => {
     try {
-        const { proof_of_payment_url } = req.body;
-
-        // Validate proof of payment URL
-        if (!proof_of_payment_url) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Proof of payment URL is required" 
+        // Check if file was uploaded
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Proof of payment file is required"
             });
         }
 
@@ -222,10 +247,10 @@ exports.submitProofOfPayment = async (req, res) => {
         }
 
         // Check if payment is already paid or rejected
-        if (payment.status === 'Paid' || payment.status === 'Rejected') {
-            return res.status(400).json({ 
-                success: false, 
-                message: `Cannot submit proof for payment with ${payment.status} status` 
+        if (payment.status === 'Dibayar' || payment.status === 'Ditolak') {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot submit proof for payment with ${payment.status} status`
             });
         }
 
@@ -236,20 +261,23 @@ exports.submitProofOfPayment = async (req, res) => {
             }
         }
 
+        // Get Cloudinary URL from uploaded file
+        const proof_of_payment_url = req.file.path; // Cloudinary memberikan URL otomatis
+
         // Update payment with proof and change status to Submitted
         const updatedPayment = await Payment.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 proof_of_payment_url,
-                status: "Submitted"
+                status: "Terkirim"
             },
             { new: true, runValidators: true }
         ).populate('child_id', 'name birth_date gender');
 
-        res.json({ 
-            success: true, 
-            message: "Proof of payment submitted successfully", 
-            payment: updatedPayment 
+        res.json({
+            success: true,
+            message: "Proof of payment submitted successfully",
+            payment: updatedPayment
         });
 
     } catch (err) {
@@ -263,21 +291,21 @@ exports.updatePaymentStatus = async (req, res) => {
         const { status } = req.body;
 
         // Validate status
-        const validStatuses = ["Pending", "Submitted", "Paid", "Rejected", "Overdue"];
+        const validStatuses = ["Tertunda", "Terkirim", "Dibayar", "Ditolak", "Jatuh Tempo"];
         if (!validStatuses.includes(status)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Invalid status. Must be one of: " + validStatuses.join(", ") 
+            return res.status(400).json({
+                success: false,
+                message: "Invalid status. Must be one of: " + validStatuses.join(", ")
             });
         }
 
         // Find and update payment
         const payment = await Payment.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 status,
                 // If status is Paid, set paid_at timestamp
-                ...(status === "Paid" && { paid_at: new Date() })
+                ...(status === "Dibayar" && { paid_at: new Date() })
             },
             { new: true, runValidators: true }
         ).populate('child_id', 'name birth_date gender');
@@ -286,10 +314,10 @@ exports.updatePaymentStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
 
-        res.json({ 
-            success: true, 
-            message: "Payment status updated successfully", 
-            payment 
+        res.json({
+            success: true,
+            message: "Payment status updated successfully",
+            payment
         });
 
     } catch (err) {
@@ -302,16 +330,16 @@ exports.deletePayment = async (req, res) => {
     try {
         // Find payment first to check status
         const payment = await Payment.findById(req.params.id);
-        
+
         if (!payment) {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
 
         // Prevent deletion of paid payments
-        if (payment.status === 'Paid') {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Cannot delete paid payments" 
+        if (payment.status === 'Dibayar') {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete paid payments"
             });
         }
 

@@ -8,7 +8,7 @@ const calculateSchedulerDueDate = (category) => {
     const today = new Date();
     
     switch (category) {
-        case 'Monthly':
+        case 'Bulanan':
             // Monthly payment: 10th of CURRENT month (pay 1-10 for current month service)
             return new Date(today.getFullYear(), today.getMonth(), 10);
             
@@ -38,7 +38,7 @@ const calculateManualDueDate = (category) => {
     const oneDayInMs = 24 * 60 * 60 * 1000;
     
     switch (category) {
-        case 'Monthly':
+        case 'Bulanan':
             // First monthly payment: 7 days from manual creation date
             return new Date(today.getTime() + 7 * oneDayInMs);
             
@@ -46,7 +46,7 @@ const calculateManualDueDate = (category) => {
             // First semester payment: 30 days from manual creation date
             return new Date(today.getTime() + 30 * oneDayInMs);
             
-        case 'Registration':
+        case 'Registrasi':
             // Registration fee: 7 days from creation date
             return new Date(today.getTime() + 7 * oneDayInMs);
             
@@ -62,11 +62,11 @@ const checkAndUpdateOverdue = async () => {
         // Update payments past their due_date to 'Overdue'
         const result = await Payment.updateMany(
             { 
-                status: { $in: ["Pending", "Submitted"] }, 
+                status: { $in: ["Tertunda", "Terkirim"] }, 
                 due_date: { $lt: today } 
             },
             { 
-                status: "Overdue" 
+                status: "Jatuh Tempo" 
             }
         );
         console.log(`[Overdue Check] Updated ${result.modifiedCount} payments to Overdue`);
@@ -115,17 +115,17 @@ const createRecurringPayments = async () => {
                 const existingMonthly = await Payment.findOne({
                     child_id: child._id,
                     period: monthlyPeriod,
-                    category: 'Monthly'
+                    category: 'Bulanan'
                 });
 
                 if (!existingMonthly) {
                     await Payment.create({
                         child_id: child._id,
                         amount: child.monthly_fee,
-                        due_date: calculateSchedulerDueDate('Monthly'),
-                        category: 'Monthly',
+                        due_date: calculateSchedulerDueDate('Bulanan'),
+                        category: 'Bulanan',
                         period: monthlyPeriod,
-                        status: 'Pending'
+                        status: 'Tertunda'
                     });
                     monthlyCount++;
                     console.log(`[Created] Monthly payment for ${child.name} (${monthlyPeriod})`);
@@ -147,7 +147,7 @@ const createRecurringPayments = async () => {
                         due_date: calculateSchedulerDueDate('Semester'),
                         category: 'Semester',
                         period: semesterPeriod,
-                        status: 'Pending'
+                        status: 'Tertunda'
                     });
                     semesterCount++;
                     console.log(`[Created] Semester payment for ${child.name} (${semesterPeriod})`);
