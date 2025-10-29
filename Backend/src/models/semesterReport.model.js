@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const monthlyReportSchema = new mongoose.Schema({
+const semesterReportSchema = new mongoose.Schema({
     child_id: { type: mongoose.Schema.Types.ObjectId, ref: "Child", required: true },
     teacher_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     semester: { type: String, required: true },
@@ -251,5 +251,5 @@ const monthlyReportSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-const MonthlyReport = mongoose.model("MonthlyReport", monthlyReportSchema);
-module.exports = MonthlyReport;
+const SemesterReport = mongoose.model("SemesterReport", semesterReportSchema);
+module.exports = SemesterReport;

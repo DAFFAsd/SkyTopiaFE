@@ -1,8 +1,8 @@
-const MonthlyReport = require('../models/monthlyReport.model');
+const SemesterReport = require('../models/semesterReport.model');
 const Child = require('../models/child.model');
 
-// Create monthly report - Teacher only
-exports.createMonthlyReport = async (req, res) => {
+// Create semester report - Teacher only
+exports.createSemesterReport = async (req, res) => {
     try {
         const { child_id, semester, ...reportData } = req.body;
         
@@ -13,7 +13,7 @@ exports.createMonthlyReport = async (req, res) => {
         }
 
         // Check if report already exists for this child and semester
-        const existingReport = await MonthlyReport.findOne({ 
+        const existingReport = await SemesterReport.findOne({ 
             child_id, 
             semester 
         });
@@ -21,12 +21,12 @@ exports.createMonthlyReport = async (req, res) => {
         if (existingReport) {
             return res.status(400).json({ 
                 success: false, 
-                message: "Monthly report for this child and semester already exists" 
+                message: "Semester report for this child and semester already exists" 
             });
         }
 
-        // Create new monthly report
-        const monthlyReport = await MonthlyReport.create({
+        // Create new semester report
+        const semesterReport = await SemesterReport.create({
             child_id,
             teacher_id: req.user.userId,
             semester,
@@ -34,13 +34,13 @@ exports.createMonthlyReport = async (req, res) => {
         });
 
         // Populate child and teacher information for response
-        const populatedReport = await MonthlyReport.findById(monthlyReport._id)
+        const populatedReport = await SemesterReport.findById(semesterReport._id)
             .populate('child_id', 'name birth_date gender')
             .populate('teacher_id', 'name email');
 
         res.status(201).json({ 
             success: true, 
-            message: "Monthly report created successfully", 
+            message: "Semester report created successfully", 
             report: populatedReport 
         });
 
@@ -49,11 +49,11 @@ exports.createMonthlyReport = async (req, res) => {
     }
 };
 
-// Get all monthly reports - Admin only
-exports.getAllMonthlyReports = async (req, res) => {
+// Get all semester reports - Admin only
+exports.getAllSemesterReports = async (req, res) => {
     try {
-        // Find all monthly reports with populated child and teacher info
-        const reports = await MonthlyReport.find()
+        // Find all semester reports with populated child and teacher info
+        const reports = await SemesterReport.find()
             .populate('child_id', 'name birth_date gender')
             .populate('teacher_id', 'name email');
         
@@ -63,11 +63,11 @@ exports.getAllMonthlyReports = async (req, res) => {
     }
 };
 
-// Get monthly reports by teacher - Teacher only  
-exports.getMyMonthlyReports = async (req, res) => {
+// Get semester reports by teacher - Teacher only  
+exports.getMySemesterReports = async (req, res) => {
     try {
         // Find reports created by the current teacher
-        const reports = await MonthlyReport.find({ teacher_id: req.user.userId })
+        const reports = await SemesterReport.find({ teacher_id: req.user.userId })
             .populate('child_id', 'name birth_date gender')
             .populate('teacher_id', 'name email');
         
@@ -77,15 +77,15 @@ exports.getMyMonthlyReports = async (req, res) => {
     }
 };
 
-// Get monthly reports for my child - Parent only
-exports.getMyChildMonthlyReports = async (req, res) => {
+// Get semester reports for my child - Parent only
+exports.getMyChildSemesterReports = async (req, res) => {
     try {
         // Find all children belonging to the parent
         const myChildren = await Child.find({ parent_id: req.user.userId });
         const childIds = myChildren.map(child => child._id);
 
         // Find reports for the parent's children
-        const reports = await MonthlyReport.find({ child_id: { $in: childIds } })
+        const reports = await SemesterReport.find({ child_id: { $in: childIds } })
             .populate('child_id', 'name birth_date gender')
             .populate('teacher_id', 'name email');
         
@@ -95,16 +95,16 @@ exports.getMyChildMonthlyReports = async (req, res) => {
     }
 };
 
-// Get monthly report by ID - Admin (all reports), Teacher (own reports only), Parent (own child only)
-exports.getMonthlyReportById = async (req, res) => {
+// Get semester report by ID - Admin (all reports), Teacher (own reports only), Parent (own child only)
+exports.getSemesterReportById = async (req, res) => {
     try {
         // Find report by ID with populated data
-        const report = await MonthlyReport.findById(req.params.id)
+        const report = await SemesterReport.findById(req.params.id)
             .populate('child_id', 'name birth_date gender parent_id')
             .populate('teacher_id', 'name email');
 
         if (!report) {
-            return res.status(404).json({ success: false, message: "Monthly report not found" });
+            return res.status(404).json({ success: false, message: "Semester report not found" });
         }
 
         // Check if parent is accessing report for their own child
@@ -127,14 +127,14 @@ exports.getMonthlyReportById = async (req, res) => {
 };
 
 // Partial update for checklist style - Teacher only
-exports.partialUpdateMonthlyReport = async (req, res) => {
+exports.partialUpdateSemesterReport = async (req, res) => {
     try {
         const { updates } = req.body; // { "field.path": value }
         
         // Find report first to verify ownership
-        const existingReport = await MonthlyReport.findById(req.params.id);
+        const existingReport = await SemesterReport.findById(req.params.id);
         if (!existingReport) {
-            return res.status(404).json({ success: false, message: "Monthly report not found" });
+            return res.status(404).json({ success: false, message: "Semester report not found" });
         }
 
         // Check if teacher is updating their own report
@@ -153,7 +153,7 @@ exports.partialUpdateMonthlyReport = async (req, res) => {
         }
 
         // Update the report
-        const report = await MonthlyReport.findByIdAndUpdate(
+        const report = await SemesterReport.findByIdAndUpdate(
             req.params.id,
             { $set: updateQuery },
             { new: true, runValidators: true }
@@ -163,7 +163,7 @@ exports.partialUpdateMonthlyReport = async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: "Monthly report updated successfully", 
+            message: "Semester report updated successfully", 
             report 
         });
 
@@ -172,15 +172,15 @@ exports.partialUpdateMonthlyReport = async (req, res) => {
     }
 };
 
-// Update monthly report - Teacher only (full update)
-exports.updateMonthlyReport = async (req, res) => {
+// Update semester report - Teacher only (full update)
+exports.updateSemesterReport = async (req, res) => {
     try {
         const { semester, ...updateData } = req.body;
         
         // Find report first to verify ownership
-        const existingReport = await MonthlyReport.findById(req.params.id);
+        const existingReport = await SemesterReport.findById(req.params.id);
         if (!existingReport) {
-            return res.status(404).json({ success: false, message: "Monthly report not found" });
+            return res.status(404).json({ success: false, message: "Semester report not found" });
         }
 
         // Check if teacher is updating their own report
@@ -189,7 +189,7 @@ exports.updateMonthlyReport = async (req, res) => {
         }
 
         // Update the report
-        const report = await MonthlyReport.findByIdAndUpdate(
+        const report = await SemesterReport.findByIdAndUpdate(
             req.params.id,
             { semester, ...updateData },
             { new: true, runValidators: true }
@@ -199,7 +199,7 @@ exports.updateMonthlyReport = async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: "Monthly report updated successfully", 
+            message: "Semester report updated successfully", 
             report 
         });
 
@@ -208,13 +208,13 @@ exports.updateMonthlyReport = async (req, res) => {
     }
 };
 
-// Delete monthly report - Teacher only (own reports)
-exports.deleteMonthlyReport = async (req, res) => {
+// Delete semester report - Teacher only (own reports)
+exports.deleteSemesterReport = async (req, res) => {
     try {
         // Find report first to verify ownership
-        const report = await MonthlyReport.findById(req.params.id);
+        const report = await SemesterReport.findById(req.params.id);
         if (!report) {
-            return res.status(404).json({ success: false, message: "Monthly report not found" });
+            return res.status(404).json({ success: false, message: "Semester report not found" });
         }
 
         // Check if teacher is deleting their own report
@@ -222,8 +222,8 @@ exports.deleteMonthlyReport = async (req, res) => {
             return res.status(403).json({ success: false, message: "Access denied" });
         }
 
-        await MonthlyReport.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: "Monthly report deleted successfully" });
+        await SemesterReport.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Semester report deleted successfully" });
         
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

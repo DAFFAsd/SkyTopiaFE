@@ -9,7 +9,7 @@ const { startScheduler } = require('./src/tasks/scheduler');
 // Import routes
 const childRoutes = require('./src/routes/child.route');
 const dailyReportRoutes = require('./src/routes/dailyReport.route');
-const monthlyReportRoutes = require('./src/routes/monthlyReport.route');
+const semesterReportRoutes = require('./src/routes/semesterReport.route');
 const paymentRoutes = require('./src/routes/payment.route');
 const userRoutes = require('./src/routes/user.route');
 
@@ -35,7 +35,7 @@ app.get('/status', (req, res) => {
 // API Routes
 app.use("/api/children", childRoutes);
 app.use("/api/daily-reports", dailyReportRoutes);
-app.use("/api/monthly-reports", monthlyReportRoutes);
+app.use("/api/semester-reports", semesterReportRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
 
