@@ -17,6 +17,13 @@ const config = {
             'form-stroke': '#666666',
             'login-pink': '#D36F9D',
             'login-pink-focus': '#FACCD6',
+            'sidebar-bg': '#FFFFFF',
+            'sidebar-text': '#5A6A85',
+            'active-pink': '#FDF4F8',
+            'active-pink-text': '#D36F9D',
+            'welcome-yellow': '#FDFACF',
+            'stat-pink-bg': '#FFE1F1',
+            'stat-blue-bg': '#87B9FF',
         },
         fontFamily: {
             sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
