@@ -6,6 +6,14 @@ exports.createSemesterReport = async (req, res) => {
     try {
         const { child_id, semester, ...reportData } = req.body;
         
+        // Validate semester format
+        if (!semester || !semester.match(/^\d{4}-[12]$/)) {
+            return res.status(400).json({
+                success: false,
+                message: "Semester must be in format: YYYY-1 or YYYY-2 (example: 2025-1, 2025-2)"
+            });
+        }
+
         // Verify that child exists
         const child = await Child.findById(child_id);
         if (!child) {
@@ -13,11 +21,7 @@ exports.createSemesterReport = async (req, res) => {
         }
 
         // Check if report already exists for this child and semester
-        const existingReport = await SemesterReport.findOne({ 
-            child_id, 
-            semester 
-        });
-        
+        const existingReport = await SemesterReport.findOne({ child_id, semester });
         if (existingReport) {
             return res.status(400).json({ 
                 success: false, 
@@ -109,8 +113,7 @@ exports.getSemesterReportById = async (req, res) => {
 
         // Check if parent is accessing report for their own child
         if (req.user.role === 'Parent') {
-            const child = await Child.findById(report.child_id._id);
-            if (child.parent_id.toString() !== req.user.userId) {
+            if (report.child_id.parent_id.toString() !== req.user.userId) {
                 return res.status(403).json({ success: false, message: "Access denied" });
             }
         }
@@ -126,12 +129,12 @@ exports.getSemesterReportById = async (req, res) => {
     }
 };
 
-// Partial update for checklist style - Teacher only
+// Partial update for checklist style frontend - Teacher only
 exports.partialUpdateSemesterReport = async (req, res) => {
     try {
-        const { updates } = req.body; // { "field.path": value }
+        const { updates } = req.body;
         
-        // Find report first to verify ownership
+        // Find report
         const existingReport = await SemesterReport.findById(req.params.id);
         if (!existingReport) {
             return res.status(404).json({ success: false, message: "Semester report not found" });
@@ -147,8 +150,16 @@ exports.partialUpdateSemesterReport = async (req, res) => {
         for (const [path, value] of Object.entries(updates)) {
             const fieldPath = path.split('.');
             if (fieldPath.length === 2) {
-                if (!updateQuery[fieldPath[0]]) updateQuery[fieldPath[0]] = {};
+                if (!updateQuery[fieldPath[0]]) {
+                    updateQuery[fieldPath[0]] = {};
+                }
                 updateQuery[fieldPath[0]][fieldPath[1]] = value;
+                
+                /*  misal :
+                    fieldPath[0] = 'religious_moral'
+                    fieldPath[1] = 'berdoa_sebelum_kegiatan' 
+                    value = 'Konsisten' 
+                */
             }
         }
 
@@ -161,11 +172,7 @@ exports.partialUpdateSemesterReport = async (req, res) => {
         .populate('child_id', 'name birth_date gender')
         .populate('teacher_id', 'name email');
 
-        res.json({ 
-            success: true, 
-            message: "Semester report updated successfully", 
-            report 
-        });
+        res.json({ success: true, message: "Semester report updated successfully", report });
 
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -177,7 +184,7 @@ exports.updateSemesterReport = async (req, res) => {
     try {
         const { semester, ...updateData } = req.body;
         
-        // Find report first to verify ownership
+        // Find report
         const existingReport = await SemesterReport.findById(req.params.id);
         if (!existingReport) {
             return res.status(404).json({ success: false, message: "Semester report not found" });
@@ -197,11 +204,7 @@ exports.updateSemesterReport = async (req, res) => {
         .populate('child_id', 'name birth_date gender')
         .populate('teacher_id', 'name email');
 
-        res.json({ 
-            success: true, 
-            message: "Semester report updated successfully", 
-            report 
-        });
+        res.json({ success: true, message: "Semester report updated successfully", report });
 
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -211,7 +214,7 @@ exports.updateSemesterReport = async (req, res) => {
 // Delete semester report - Teacher only (own reports)
 exports.deleteSemesterReport = async (req, res) => {
     try {
-        // Find report first to verify ownership
+        // Find report
         const report = await SemesterReport.findById(req.params.id);
         if (!report) {
             return res.status(404).json({ success: false, message: "Semester report not found" });

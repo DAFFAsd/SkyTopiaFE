@@ -33,9 +33,7 @@ exports.createDailyReport = async (req, res) => {
             .populate('teacher_id', 'name email');
 
         res.status(201).json({ 
-            success: true, 
-            message: "Daily report created successfully", 
-            report: populatedReport 
+            success: true, message: "Daily report created successfully", report: populatedReport 
         });
 
     } catch (err) {
@@ -103,8 +101,7 @@ exports.getDailyReportById = async (req, res) => {
 
         // Check if parent is accessing report for their own child
         if (req.user.role === 'Parent') {
-            const child = await Child.findById(report.child_id._id);
-            if (child.parent_id.toString() !== req.user.userId) {
+            if (report.child_id.parent_id.toString() !== req.user.userId) {
                 return res.status(403).json({ success: false, message: "Access denied" });
             }
         }
@@ -125,7 +122,7 @@ exports.updateDailyReport = async (req, res) => {
     try {
         const { theme, sub_theme, physical_motor, cognitive, social_emotional, meals, nap_duration, special_notes } = req.body;
         
-        // Find report first to verify ownership
+        // Check if report exists
         const existingReport = await DailyReport.findById(req.params.id);
         if (!existingReport) {
             return res.status(404).json({ success: false, message: "Daily report not found" });
@@ -145,11 +142,7 @@ exports.updateDailyReport = async (req, res) => {
         .populate('child_id', 'name birth_date gender')
         .populate('teacher_id', 'name email');
 
-        res.json({ 
-            success: true, 
-            message: "Daily report updated successfully", 
-            report 
-        });
+        res.json({ success: true, message: "Daily report updated successfully", report });
 
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -159,7 +152,7 @@ exports.updateDailyReport = async (req, res) => {
 // Delete daily report - Teacher only (own reports)
 exports.deleteDailyReport = async (req, res) => {
     try {
-        // Find report first to verify ownership
+        // Check if report exists
         const report = await DailyReport.findById(req.params.id);
         if (!report) {
             return res.status(404).json({ success: false, message: "Daily report not found" });

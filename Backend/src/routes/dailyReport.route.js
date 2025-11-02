@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dailyReportController = require('../controllers/dailyReport.controller');
 const { authMiddleware } = require('../middleware/auth');
-const { requireAdmin, requireTeacher, requireParent } = require('../middleware/roleCheck');
+const { requireAdmin, requireTeacher, requireParent, requireAnyRole } = require('../middleware/roleCheck');
 
 // Teacher only routes
 router.post('/', authMiddleware, requireTeacher, dailyReportController.createDailyReport);
@@ -17,6 +17,6 @@ router.get('/', authMiddleware, requireAdmin, dailyReportController.getAllDailyR
 router.get('/my-child-reports', authMiddleware, requireParent, dailyReportController.getMyChildReports);
 
 // Shared route (all authenticated users)
-router.get('/:id', authMiddleware, dailyReportController.getDailyReportById);
+router.get('/:id', authMiddleware, requireAnyRole, dailyReportController.getDailyReportById);
 
 module.exports = router;

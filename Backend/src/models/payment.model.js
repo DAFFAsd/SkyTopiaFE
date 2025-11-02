@@ -7,18 +7,11 @@ const paymentSchema = new mongoose.Schema({
     status: { type: String, enum: ["Tertunda", "Terkirim", "Dibayar", "Ditolak", "Jatuh Tempo"], default: "Tertunda" },
     due_date: { type: Date },
     paid_at: { type: Date },
-    
-    category: { 
-        type: String, 
-        enum: ["Bulanan", "Semester", "Registrasi"], 
-        required: true,
-        default: "Bulanan"
-    },
-    
+    rejection_reason: { type: String },
+    category: { type: String, enum: ["Bulanan", "Semester", "Registrasi"], required: true, default: "Bulanan" },
     period: { type: String }, // Format: "2025-01" for monthly, "2025-1" for semester
     
 }, { timestamps: true });
 
 const Payment = mongoose.model("Payment", paymentSchema);
-
 module.exports = Payment;

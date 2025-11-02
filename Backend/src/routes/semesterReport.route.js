@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const semesterReportController = require('../controllers/semesterReport.controller');
 const { authMiddleware } = require('../middleware/auth');
-const { requireAdmin, requireTeacher, requireParent } = require('../middleware/roleCheck');
+const { requireAdmin, requireTeacher, requireParent, requireAnyRole } = require('../middleware/roleCheck');
 
 // Teacher only routes
 router.post('/', authMiddleware, requireTeacher, semesterReportController.createSemesterReport);
@@ -18,6 +18,6 @@ router.get('/', authMiddleware, requireAdmin, semesterReportController.getAllSem
 router.get('/my-child-reports', authMiddleware, requireParent, semesterReportController.getMyChildSemesterReports);
 
 // Shared route (all authenticated users)
-router.get('/:id', authMiddleware, semesterReportController.getSemesterReportById);
+router.get('/:id', authMiddleware, requireAnyRole, semesterReportController.getSemesterReportById);
 
 module.exports = router;
