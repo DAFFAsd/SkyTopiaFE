@@ -1,9 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./src/config/db');
-
-// Import scheduler
+const database = require('./src/config/database');
 const { startScheduler } = require('./src/tasks/scheduler');
 
 // Import routes
@@ -12,12 +10,14 @@ const dailyReportRoutes = require('./src/routes/dailyReport.route');
 const semesterReportRoutes = require('./src/routes/semesterReport.route');
 const paymentRoutes = require('./src/routes/payment.route');
 const userRoutes = require('./src/routes/user.route');
+const chatbotRoutes = require('./src/routes/chatbot.route');
 
+// Server configuration
 const port = process.env.PORT || 3000;
 const app = express();
 
 // Connect to database
-db.connectDB();
+database.connectDB();
 
 // Middlewares
 app.use(express.json());
@@ -39,11 +39,12 @@ app.use("/api/daily-reports", dailyReportRoutes);
 app.use("/api/semester-reports", semesterReportRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
-// Start scheduler
+// Start payment scheduler
 startScheduler(); 
 
-// Handler for undefined routes
+// Handler handling for undefined routes
 app.use((req, res) => {
     res.status(404).json({ 
         success: false, 
@@ -51,7 +52,7 @@ app.use((req, res) => {
     });
 });
 
-// Error handling middleware
+// Error handling for middleware
 app.use((error, req, res, next) => {
     console.error('Error:', error);
     res.status(500).json({ 
@@ -63,5 +64,4 @@ app.use((error, req, res, next) => {
 // Start server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
-    console.log(`Cron jobs activated.`);
 });

@@ -11,5 +11,4 @@ const childSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Child = mongoose.model("Child", childSchema);
-
 module.exports = Child;

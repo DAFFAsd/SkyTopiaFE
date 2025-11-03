@@ -3,26 +3,28 @@ const moment = require('moment');
 const Payment = require('../models/payment.model'); 
 const Child = require('../models/child.model');
 
-// Helper function to calculate due date for scheduler
+// Calculate due date for scheduler
 const calculateSchedulerDueDate = (category) => {
     const today = new Date();
     
     switch (category) {
         case 'Bulanan':
-            // Monthly payment: 10th of CURRENT month (pay 1-10 for current month service)
+            // Monthly payment: 10th of current month (pay 1-10 for current month service)
             return new Date(today.getFullYear(), today.getMonth(), 10);
             
         case 'Semester':
-            // Semester payment (pay in advance for the upcoming semester)
+            // Semester payment: pay in advance for the upcoming semester
             const currentYear = today.getFullYear();
             const currentMonth = today.getMonth() + 1;
 
             if (currentMonth === 6) {
-                // June: Payment for Even Semester (Jul-Dec), due July 15th
+                // June: payment for even semester (Jul-Dec), due July 15th
                 return new Date(currentYear, 6, 15); // July 15th
             } else if (currentMonth === 12) {
-                // December: Payment for Odd Semester (Jan-Jun), due January 15th next year
+                // December: payment for odd semester (Jan-Jun), due January 15th next year
                 return new Date(currentYear + 1, 0, 15); // January 15th
+            } else {
+                throw new Error('Semester payments only generated in June and December');
             }
             
         default:
@@ -30,7 +32,7 @@ const calculateSchedulerDueDate = (category) => {
     }
 };
 
-// Helper function to calculate due date for manually created payments (first payment)
+// Calculate due date for manually created payments (first payment)
 const calculateManualDueDate = (category) => {
     const today = new Date();
     
@@ -79,23 +81,21 @@ const checkAndUpdateOverdue = async () => {
 const createRecurringPayments = async () => {
     try {
         await checkAndUpdateOverdue();
-        console.log('Starting recurring payment generation...');
-
         const currentMonth = moment().month() + 1; // 1-12
         const currentYear = moment().year();
         
-        // Monthly period: CURRENT month (pay for current month service)
+        // Monthly period: current month (pay for current month service)
         const monthlyPeriod = moment().format('YYYY-MM');
         
-        // Semester period based on academic calendar
+        // Semester period: based on academic calendar
         let semesterPeriod, semesterCategory;
         if (currentMonth === 6) {
-            // June: Generate for Even Semester (Jul-Dec)
-            semesterPeriod = `${currentYear}-2`; // Even Semester current year
+            // June: generate for even semester (Jul-Dec)
+            semesterPeriod = `${currentYear}-2`; // even semester current year
             semesterCategory = 'Semester';
         } else if (currentMonth === 12) {
-            // December: Generate for Odd Semester (Jan-Jun)
-            semesterPeriod = `${currentYear + 1}-1`; // Odd Semester next year
+            // December: generate for odd semester (Jan-Jun)
+            semesterPeriod = `${currentYear + 1}-1`; // odd semester next year
             semesterCategory = 'Semester';
         }
         

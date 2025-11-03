@@ -24,10 +24,7 @@ exports.createPayment = async (req, res) => {
                 break;
             case 'Registrasi':
                 if (!req.body.amount || req.body.amount <= 0) {
-                    return res.status(400).json({
-                        success: false,
-                        message: "Amount is required for registration payments"
-                    });
+                    return res.status(400).json({ success: false, message: "Amount is required for registration payments" });
                 }
                 amount = req.body.amount;
                 break;
@@ -35,34 +32,21 @@ exports.createPayment = async (req, res) => {
 
         // Validate that a valid amount was determined
         if (amount <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: `No ${category} fee set for this child`
-            });
+            return res.status(400).json({ success: false, message: `No ${category} fee set for this child` });
         }
 
         // Validate category is one of the allowed values
         const validCategories = ["Bulanan", "Semester", "Registrasi"];
         if (category && !validCategories.includes(category)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid category"
-            });
+            return res.status(400).json({ success: false, message: "Invalid category" });
         }
 
         // Validate period requirements based on category
         if (category === 'Semester' && !period) {
-            return res.status(400).json({
-                success: false,
-                message: "Period is required for semester payments"
-            });
+            return res.status(400).json({ success: false, message: "Period is required for semester payments" });
         }
-
         if (category === 'Bulanan' && !period) {
-            return res.status(400).json({
-                success: false,
-                message: "Period is required for monthly payments"
-            });
+            return res.status(400).json({ success: false, message: "Period is required for monthly payments" });
         }
 
         // Calculate due date
@@ -70,20 +54,12 @@ exports.createPayment = async (req, res) => {
 
         // Validate due date is in the future if provided manually
         if (due_date && finalDueDate <= new Date()) {
-            return res.status(400).json({
-                success: false,
-                message: "Due date must be in the future"
-            });
+            return res.status(400).json({ success: false, message: "Due date must be in the future" });
         }
 
         // Check for duplicate payments in the same period
         if (period) {
-            const existingPayment = await Payment.findOne({
-                child_id,
-                period,
-                category
-            });
-
+            const existingPayment = await Payment.findOne({ child_id, period, category });
             if (existingPayment) {
                 return res.status(400).json({
                     success: false,
@@ -106,11 +82,7 @@ exports.createPayment = async (req, res) => {
         const populatedPayment = await Payment.findById(payment._id)
             .populate('child_id', 'name birth_date gender monthly_fee semester_fee');
 
-        res.status(201).json({
-            success: true,
-            message: "Payment created successfully",
-            payment: populatedPayment
-        });
+        res.status(201).json({ success: true, message: "Payment created successfully", payment: populatedPayment });
 
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -126,16 +98,16 @@ exports.getAllPayments = async (req, res) => {
         const { status, category, child_id, page = 1, limit = 10 } = req.query;
         const filter = {};
 
-        // Apply filters if provided
+        // Apply filters (if provided)
         if (status) filter.status = status;
         if (category) filter.category = category;
         if (child_id) filter.child_id = child_id;
 
         const payments = await Payment.find(filter)
             .populate('child_id', 'name birth_date gender')
-            .sort({ due_date: 1 })
-            .skip((page - 1) * limit)
-            .limit(parseInt(limit));
+            .sort({ due_date: 1 })    // ascending
+            .skip((page - 1) * limit) // skip previous page
+            .limit(parseInt(limit));  // get max 10 datas after skip
 
         const total = await Payment.countDocuments(filter);
 
@@ -143,10 +115,10 @@ exports.getAllPayments = async (req, res) => {
             success: true,
             payments,
             pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / limit)
+                page: parseInt(page),    // current page
+                limit: parseInt(limit),  // data per page
+                total,                   // total data
+                pages: Math.ceil(total / limit)  // total pages
             }
         });
     } catch (err) {
@@ -232,10 +204,7 @@ exports.submitProofOfPayment = async (req, res) => {
     try {
         // Check if file was uploaded
         if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: "Proof of payment file is required"
-            });
+            return res.status(400).json({ success: false, message: "Proof of payment file is required" });
         }
 
         // Find payment first
@@ -246,8 +215,8 @@ exports.submitProofOfPayment = async (req, res) => {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
 
-        // Check if payment is already paid or rejected
-        if (payment.status === 'Dibayar' || payment.status === 'Ditolak') {
+        // Check if payment is already paid
+        if (payment.status === 'Dibayar') {
             return res.status(400).json({
                 success: false,
                 message: `Cannot submit proof for payment with ${payment.status} status`
@@ -261,8 +230,8 @@ exports.submitProofOfPayment = async (req, res) => {
             }
         }
 
-        // Get Cloudinary URL from uploaded file
-        const proof_of_payment_url = req.file.path; // Cloudinary memberikan URL otomatis
+        // Get cloudinary URL from uploaded file
+        const proof_of_payment_url = req.file.path;
 
         // Update payment with proof and change status to Submitted
         const updatedPayment = await Payment.findByIdAndUpdate(
@@ -279,7 +248,6 @@ exports.submitProofOfPayment = async (req, res) => {
             message: "Proof of payment submitted successfully",
             payment: updatedPayment
         });
-
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -288,7 +256,7 @@ exports.submitProofOfPayment = async (req, res) => {
 // Update payment status - Admin only
 exports.updatePaymentStatus = async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, rejection_reason } = req.body;
 
         // Validate status
         const validStatuses = ["Tertunda", "Terkirim", "Dibayar", "Ditolak", "Jatuh Tempo"];
@@ -299,13 +267,30 @@ exports.updatePaymentStatus = async (req, res) => {
             });
         }
 
+        // If status is rejected, give the reason
+        if (status === "Ditolak" && !rejection_reason) {
+            return res.status(400).json({ success: false, message: "Rejection reason is required when rejecting payment" });
+        }
+
         // Find and update payment
         const payment = await Payment.findByIdAndUpdate(
             req.params.id,
             {
                 status,
-                // If status is Paid, set paid_at timestamp
-                ...(status === "Dibayar" && { paid_at: new Date() })
+                // If status is paid, set paid_at dan clear rejection reason
+                ...(status === "Dibayar" && {
+                    paid_at: new Date(),
+                    rejection_reason: null
+                }),
+                // If status is rejected, set rejection_reason
+                ...(status === "Ditolak" && {
+                    rejection_reason: rejection_reason
+                }),
+                // If status is neither paid nor rejected, clear data
+                ...(!["Dibayar", "Ditolak"].includes(status) && {
+                    paid_at: null,
+                    rejection_reason: null
+                })
             },
             { new: true, runValidators: true }
         ).populate('child_id', 'name birth_date gender');
@@ -314,12 +299,7 @@ exports.updatePaymentStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
 
-        res.json({
-            success: true,
-            message: "Payment status updated successfully",
-            payment
-        });
-
+        res.json({ success: true, message: "Payment status updated successfully", payment });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -330,24 +310,19 @@ exports.deletePayment = async (req, res) => {
     try {
         // Find payment first to check status
         const payment = await Payment.findById(req.params.id);
-
         if (!payment) {
             return res.status(404).json({ success: false, message: "Payment not found" });
         }
 
         // Prevent deletion of paid payments
         if (payment.status === 'Dibayar') {
-            return res.status(400).json({
-                success: false,
-                message: "Cannot delete paid payments"
-            });
+            return res.status(400).json({ success: false, message: "Cannot delete paid payments" });
         }
 
         // Delete the payment
         await Payment.findByIdAndDelete(req.params.id);
 
         res.json({ success: true, message: "Payment deleted successfully" });
-
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
