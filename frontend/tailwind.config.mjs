@@ -24,6 +24,10 @@ const config = {
             'welcome-yellow': '#FDFACF',
             'stat-pink-bg': '#FFE1F1',
             'stat-blue-bg': '#87B9FF',
+            'button-transfer': '#6E44FF', 
+            'button-edit': '#3B82F6',   
+            'button-delete': '#EF4444', 
+            'profile-banner': '#E0EFFF',
         },
         fontFamily: {
             sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
