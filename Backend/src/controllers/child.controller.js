@@ -4,7 +4,7 @@ const User = require('../models/user.model');
 // Create new child - Admin only
 exports.createChild = async (req, res) => {
     try {
-        const { name, birth_date, gender, parent_id, medical_notes, monthly_fee, semester_fee } = req.body;
+        const { name, birth_date, gender, parent_id, medical_notes, monthly_fee, semester_fee, schedules } = req.body;
 
         // Verify that parent_id exists and is a Parent role
         const parent = await User.findById(parent_id);
@@ -20,11 +20,21 @@ exports.createChild = async (req, res) => {
             parent_id,
             medical_notes,
             monthly_fee,
-            semester_fee
+            semester_fee,
+            schedules: schedules || []
         });
 
         // Populate parent information for response
-        const populatedChild = await Child.findById(child._id).populate('parent_id', 'name email phone');
+        const populatedChild = await Child.findById(child._id)
+            .populate('parent_id', 'name email phone')
+            .populate({
+                path: 'schedules',
+                select: 'title day startTime endTime teacher location curriculum',
+                populate: [
+                    { path: 'teacher', select: 'name' },
+                    { path: 'curriculum', select: 'title' }
+                ]
+            });
 
         res.status(201).json({
             success: true,
@@ -41,7 +51,17 @@ exports.createChild = async (req, res) => {
 exports.getAllChildren = async (req, res) => {
     try {
         // Find all children and populate parent information
-        const children = await Child.find().populate('parent_id', 'name email phone');
+        const children = await Child.find()
+            .populate('parent_id', 'name email phone')
+            .populate({
+                path: 'schedules',
+                select: 'title day startTime endTime teacher location curriculum',
+                populate: [
+                    { path: 'teacher', select: 'name' },
+                    { path: 'curriculum', select: 'title' }
+                ]
+            });
+
         res.json({ success: true, children });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -52,7 +72,17 @@ exports.getAllChildren = async (req, res) => {
 exports.getChildById = async (req, res) => {
     try {
         // Find child by ID and populate parent information
-        const child = await Child.findById(req.params.id).populate('parent_id', 'name email phone');
+        const child = await Child.findById(req.params.id)
+            .populate('parent_id', 'name email phone')
+            .populate({
+                path: 'schedules',
+                select: 'title day startTime endTime teacher location curriculum',
+                populate: [
+                    { path: 'teacher', select: 'name email' },
+                    { path: 'curriculum', select: 'title description grade' }
+                ]
+            });
+
         if (!child) {
             return res.status(404).json({ success: false, message: "Child not found" });
         }
@@ -72,7 +102,16 @@ exports.getChildById = async (req, res) => {
 exports.getMyChildren = async (req, res) => {
     try {
         // Find children that belong to the current parent user
-        const children = await Child.find({ parent_id: req.user.userId });
+        const children = await Child.find({ parent_id: req.user.userId })
+            .populate({
+                path: 'schedules',
+                select: 'title day startTime endTime teacher location curriculum',
+                populate: [
+                    { path: 'teacher', select: 'name' },
+                    { path: 'curriculum', select: 'title description grade' }
+                ]
+            });
+
         res.json({ success: true, children });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -82,7 +121,7 @@ exports.getMyChildren = async (req, res) => {
 // Update child - Admin only
 exports.updateChild = async (req, res) => {
     try {
-        const { name, birth_date, gender, parent_id, medical_notes, monthly_fee, semester_fee } = req.body;
+        const { name, birth_date, gender, parent_id, medical_notes, monthly_fee, semester_fee, schedules } = req.body;
 
         // Construct update object dynamically to handle optional fields
         const updateFields = {
@@ -92,7 +131,8 @@ exports.updateChild = async (req, res) => {
             parent_id,
             medical_notes,
             monthly_fee,
-            semester_fee
+            semester_fee,
+            schedules
         };
 
         // Update child and return updated data with parent information
@@ -100,7 +140,16 @@ exports.updateChild = async (req, res) => {
             req.params.id,
             updateFields,
             { new: true, runValidators: true }
-        ).populate('parent_id', 'name email phone');
+        )
+        .populate('parent_id', 'name email phone')
+        .populate({
+            path: 'schedules',
+            select: 'title day startTime endTime teacher location curriculum',
+            populate: [
+                { path: 'teacher', select: 'name' },
+                { path: 'curriculum', select: 'title' }
+            ]
+        });
 
         if (!child) {
             return res.status(404).json({ success: false, message: "Child not found" });
@@ -109,6 +158,74 @@ exports.updateChild = async (req, res) => {
         res.json({
             success: true,
             message: "Child updated successfully",
+            child
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Add schedule to child - Admin only
+exports.addScheduleToChild = async (req, res) => {
+    try {
+        const { childId, scheduleId } = req.body;
+
+        const child = await Child.findByIdAndUpdate(
+            childId,
+            { $addToSet: { schedules: scheduleId } },
+            { new: true }
+        )
+        .populate({
+            path: 'schedules',
+            select: 'title day startTime endTime teacher location curriculum',
+            populate: [
+                { path: 'teacher', select: 'name' },
+                { path: 'curriculum', select: 'title' }
+            ]
+        });
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Schedule added to child successfully",
+            child
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Remove schedule from child - Admin only
+exports.removeScheduleFromChild = async (req, res) => {
+    try {
+        const { childId, scheduleId } = req.body;
+
+        const child = await Child.findByIdAndUpdate(
+            childId,
+            { $pull: { schedules: scheduleId } },
+            { new: true }
+        )
+        .populate({
+            path: 'schedules',
+            select: 'title day startTime endTime teacher location curriculum',
+            populate: [
+                { path: 'teacher', select: 'name' },
+                { path: 'curriculum', select: 'title' }
+            ]
+        });
+
+        if (!child) {
+            return res.status(404).json({ success: false, message: "Child not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Schedule removed from child successfully",
             child
         });
 
@@ -156,7 +273,15 @@ exports.searchChildren = async (req, res) => {
                     }
                 }
             ]
-        }).populate('parent_id', 'name email phone');
+        })
+        .populate('parent_id', 'name email phone')
+        .populate({
+            path: 'schedules',
+            select: 'title day',
+            populate: [
+                { path: 'teacher', select: 'name' }
+            ]
+        });
 
         res.json({
             success: true,

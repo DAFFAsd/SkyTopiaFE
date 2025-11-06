@@ -49,7 +49,9 @@ class AgentService {
             this.createDailyReportsLookupTool(),
             this.createPaymentsLookupTool(),
             this.createUsersLookupTool(),
-            this.createSemesterReportsLookupTool()
+            this.createSemesterReportsLookupTool(),
+            this.createScheduleLookupTool(),
+            this.createCurriculumLookupTool() 
         ];
 
         // Allow tools to receive configurable context (data user dan context)
@@ -250,7 +252,7 @@ class AgentService {
                     }
 
                     // Access the database and collection for children data
-                    const database = this.client.database();
+                    const database = this.client.db();
                     const collection = database.collection("children");
 
                     // Filter to find children based on the parent_id
@@ -310,7 +312,7 @@ class AgentService {
                     }
 
                     // Access the database and collection
-                    const database = this.client.database();
+                    const database = this.client.db();
                     const collection = database.collection("dailyreports");
 
                     // Get parent's children first and check
@@ -442,7 +444,7 @@ class AgentService {
                     }
 
                     // Access the database and collection
-                    const database = this.client.database();
+                    const database = this.client.db();
                     const collection = database.collection("semesterreports");
 
                     // Get parent's children and check
@@ -579,7 +581,7 @@ class AgentService {
                     }
 
                     // Access the database and collection
-                    const database = this.client.database();
+                    const database = this.client.db();
                     const collection = database.collection("payments");
 
                     // Get parent's children and check
@@ -667,7 +669,7 @@ class AgentService {
                     }
 
                     // Access the database and collection for users data
-                    const database = this.client.database();
+                    const database = this.client.db();
                     const collection = database.collection("users");
 
                     // Only show teachers for parent reference
@@ -703,6 +705,211 @@ class AgentService {
                 schema: z.object({  // defines the input validation 
                     query: z.string().optional().describe("Search teacher by name"),
                     n: z.number().optional().default(5)  // control the number of results returned
+                }),
+            }
+        );
+    }
+
+    // Create the schedule lookup tool for retrieving class schedule information
+    createScheduleLookupTool() {
+        return tool(
+            async (input, config) => {
+                try {
+                    // Get search parameters from user input
+                    const { day, query, n = 20 } = input;
+
+                    // Get the user context
+                    const user = config?.configurable?.user;
+
+                    // Check if user context is available
+                    if (!user) {
+                        console.error("User context missing in schedule lookup tool");
+                        return JSON.stringify({ results: [], count: 0, error: "System error: User authentication required" });
+                    }
+
+                    // Get the user ID and validate
+                    const userId = user.userId || user._id || user.id;
+                    if (!userId) {
+                        throw new Error("User ID not found in user object");
+                    }
+
+                    // Access the database and collection
+                    const database = this.client.db();
+                    const scheduleCollection = database.collection("schedules");
+
+                    // Initialize filter - FIXED: remove empty array constraint
+                    let filter = {};
+
+                    // Filter by specific day if provided
+                    if (day && day.trim() !== '') {
+                        let dayFilter = day;
+                        // Map day names from English to Indonesian
+                        const dayMap = {
+                            'monday': 'Senin', 'mon': 'Senin',
+                            'tuesday': 'Selasa', 'tue': 'Selasa', 
+                            'wednesday': 'Rabu', 'wed': 'Rabu',
+                            'thursday': 'Kamis', 'thu': 'Kamis',
+                            'friday': 'Jumat', 'fri': 'Jumat',
+                            'saturday': 'Sabtu', 'sat': 'Sabtu',
+                            'sunday': 'Minggu', 'sun': 'Minggu'
+                        };
+                        
+                        if (dayMap[day.toLowerCase()]) {
+                            dayFilter = dayMap[day.toLowerCase()];
+                        }
+                        filter.day = { $regex: dayFilter, $options: 'i' };
+                    }
+
+                    // Add text search filter if query provided
+                    if (query && query.trim() !== '') {
+                        filter.$or = [
+                            { title: { $regex: query, $options: 'i' } },
+                            { location: { $regex: query, $options: 'i' } }
+                        ];
+                    }
+
+                    // Get schedules with curriculum and teacher information using aggregation
+                    const results = await scheduleCollection.aggregate([
+                        { $match: filter },
+                        {
+                            $lookup: {
+                                from: "curriculums",
+                                localField: "curriculum",
+                                foreignField: "_id",
+                                as: "curriculum_info"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "teacher",
+                                foreignField: "_id",
+                                as: "teacher_info"
+                            }
+                        },
+                        {
+                            $project: {
+                                title: 1,
+                                day: 1,
+                                startTime: 1,
+                                endTime: 1,
+                                location: 1,
+                                "curriculum_info.title": 1,
+                                "curriculum_info.description": 1,
+                                "teacher_info.name": 1
+                            }
+                        },
+                        { $sort: { day: 1, startTime: 1 } },
+                        { $limit: n }
+                    ]).toArray();
+
+                    // Flatten the nested arrays for cleaner response
+                    const flattenedResults = results.map(schedule => ({
+                        _id: schedule._id,
+                        title: schedule.title,
+                        day: schedule.day,
+                        startTime: schedule.startTime,
+                        endTime: schedule.endTime,
+                        location: schedule.location,
+                        curriculum_title: schedule.curriculum_info?.[0]?.title || "Tidak ada info kurikulum",
+                        curriculum_description: schedule.curriculum_info?.[0]?.description || "",
+                        teacher_name: schedule.teacher_info?.[0]?.name || "Guru belum ditentukan"
+                    }));
+
+                    // Return the results
+                    return JSON.stringify({
+                        results: flattenedResults,
+                        count: flattenedResults.length,
+                        collection: "schedules"
+                    });
+                } catch (error) {
+                    console.error("Error in schedule lookup:", error);
+                    return JSON.stringify({ error: "Failed to search schedule data", details: error.message });
+                }
+            },
+            {
+                // Tool configuration
+                name: "schedule_lookup",
+                description: "Search for class schedules by day, title, or location - PARENT ONLY. Days: 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'",
+                schema: z.object({  // defines the input validation schema
+                    day: z.string().optional().describe("Filter by day: Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu"),
+                    query: z.string().optional().describe("Search in schedule title or location"),
+                    n: z.number().optional().default(20)  // control the number of results returned
+                }),
+            }
+        );
+    }
+
+    // Create the curriculum lookup tool for retrieving curriculum and learning theme information
+    createCurriculumLookupTool() {
+        return tool(
+            async (input, config) => {
+                try {
+                    // Get from user input
+                    const { query, grade, n = 10 } = input;
+
+                    // Get the user context
+                    const user = config?.configurable?.user;
+
+                    // Check if user context is available
+                    if (!user) {
+                        console.error("User context missing in curriculum lookup tool");
+                        return JSON.stringify({ results: [], count: 0, error: "System error: User authentication required" });
+                    }
+
+                    // Access the database and collection
+                    const database = this.client.db();
+                    const collection = database.collection("curriculums");
+
+                    // Build filter - SUDAH BENAR (kosong seperti tools lainnya)
+                    let filter = {};
+
+                    // If a query is provided, add search filters
+                    if (query && query.trim() !== '') {
+                        filter.$or = [
+                            { title: { $regex: query, $options: 'i' } },
+                            { description: { $regex: query, $options: 'i' } }
+                        ];
+                    }
+
+                    // Filter by grade level if provided
+                    if (grade && grade.trim() !== '') {
+                        let gradeFilter = grade;
+                        // Map grade terms from English to Indonesian
+                        const gradeMap = {
+                            'toddler': 'Toddler', 'batita': 'Toddler',
+                            'preschool': 'Preschool', 'pra-sekolah': 'Preschool',
+                            'kindergarten': 'Kindergarten', 'tk': 'Kindergarten'
+                        };
+                        
+                        if (gradeMap[grade.toLowerCase()]) {
+                            gradeFilter = gradeMap[grade.toLowerCase()];
+                        }
+                        filter.grade = { $regex: gradeFilter, $options: 'i' };
+                    }
+
+                    // Fetch the results from the database with creation date sorting (newest first)
+                    const results = await collection.find(filter).sort({ createdAt: -1 }).limit(n).toArray();
+
+                    // Return the results
+                    return JSON.stringify({
+                        results: results,
+                        count: results.length,
+                        collection: "curriculums"
+                    });
+                } catch (error) {
+                    console.error("Error in curriculum lookup:", error);
+                    return JSON.stringify({ error: "Failed to search curriculum data", details: error.message });
+                }
+            },
+            {
+                // Tool configuration - SUDAH BENAR
+                name: "curriculum_lookup",
+                description: "Search for curriculum information and learning themes - PARENT ONLY. Grade levels: 'Toddler', 'Preschool', 'Kindergarten'",
+                schema: z.object({  // defines the input validation schema
+                    query: z.string().optional().describe("Search in curriculum titles or descriptions"),
+                    grade: z.string().optional().describe("Filter by grade level: Toddler, Preschool, Kindergarten"),
+                    n: z.number().optional().default(10)  // control the number of results returned
                 }),
             }
         );
@@ -780,6 +987,14 @@ class AgentService {
                 - Use children_lookup FIRST  
                 - Then use payments_lookup with status: "Tertunda"
                 - CALCULATE totals and highlight urgent payments
+                4. For SCHEDULE questions ("jadwal", "kegiatan", "aktivitas"):
+                - Use schedule_lookup with specific day if mentioned
+                - SUMMARIZE daily/weekly schedule structure
+                - Highlight important activities and timing
+                5. For CURRICULUM questions ("kurikulum", "tema", "pembelajaran"):
+                - Use curriculum_lookup for current learning themes
+                - Connect curriculum to child's developmental stage
+                - Suggest home activities that align with school themes
 
                 ANALYSIS & SUMMARIZATION GUIDELINES:
                 FOR DEVELOPMENT DATA:
@@ -793,6 +1008,18 @@ class AgentService {
                 - Highlight payment deadlines and urgency
                 - Provide payment reminder recommendations
 
+                FOR SCHEDULE DATA:
+                - Group activities by time blocks (pagi, siang, sore)
+                - Highlight special activities or important timings
+                - Note teacher assignments and locations
+                - Use actual day values from data (e.g., "Senin", "Monday", etc.)
+
+                FOR CURRICULUM DATA:
+                - Explain learning themes in parent-friendly language
+                - Connect themes to real-world applications
+                - Suggest complementary home activities
+                - Use actual grade values from data (e.g., "Toddler", "Preschool", "TK A", etc.)
+
                 GENERAL RESPONSE STRUCTURE:
                 1. Brief comprehensive summary
                 2. Key findings (bullet points)
@@ -803,6 +1030,8 @@ class AgentService {
                 DATA INTERPRETATION RULES:
                 - When multiple daily reports: Look for CONSISTENT patterns and progress trends
                 - When semester reports available: Focus on developmental milestones
+                - When schedule data: Use actual day names as they appear in database
+                - When curriculum data: Use actual grade levels as they appear in database
                 - When data is limited: Acknowledge limitations and suggest alternatives
                 - Always connect findings to practical parenting insights
 
@@ -811,6 +1040,10 @@ class AgentService {
                 - DO: "Berdasarkan 3 laporan harian, anak menunjukkan kemajuan konsisten dalam motorik kasar dan kemampuan sosial. Pencapaian utama: bisa bersepeda roda tiga, berbagi mainan, dan menunjukkan empati."
                 - DON'T: Copy-paste all payment records
                 - DO: "Total 2 pembayaran tertunda: Rp 12,2 juta (jatuh tempo 8 Nov). Prioritas: bayar registrasi Rp 8,6 juta terlebih dahulu."
+                - DON'T: "Senin: Matematika 08:00-09:00, Bahasa 09:30-10:30, Seni 11:00-12:00. Selasa: IPA 08:00-09:00, Olahraga 09:30-10:30..."
+                - DO: "Jadwal rutin Senin: kegiatan pagi fokus akademik (Matematika & Bahasa), siang kreativitas (Seni & Musik). Aktivitas khusus: olahraga setiap Selasa dan Kamis pagi."
+                - DON'T: "Kurikulum: Tema Binatang, Sub-tema Binatang Laut, Aktivitas Menggambar Ikan, Bernyanyi lagu ikan..."
+                - DO: "Tema bulan ini: 'Eksplorasi Laut'. Anak belajar tentang berbagai biota laut melalui gambar, cerita, dan lagu. Di rumah bisa dilanjutkan dengan mengamati aquarium atau buku bergambar laut."
 
                 TOOLS:
                 1. children_lookup - Get children data (ALWAYS USE FIRST)
@@ -818,6 +1051,16 @@ class AgentService {
                 3. payments_lookup - Search payment records  
                 4. semester_reports_lookup - Search developmental assessments
                 5. users_lookup - Search teacher contacts
+                6. schedule_lookup - Search class schedules by day
+                7. curriculum_lookup - Search curriculum and learning themes
+
+                QUERY INTERPRETATION GUIDE:
+                - "Jadwal hari Senin" → schedule_lookup(day: "Senin")
+                - "Aktivitas minggu ini" → schedule_lookup() + daily_reports_lookup(time_period: "this week")
+                - "Tema pembelajaran" → curriculum_lookup()
+                - "Apa yang dipelajari anak" → curriculum_lookup() + daily_reports_lookup()
+                - "Kurikulum untuk toddler" → curriculum_lookup(grade: "Toddler")
+                - "Kegiatan hari ini" → schedule_lookup() + daily_reports_lookup(date: "today")
 
                 Current time: {time}`,
             ],
@@ -892,7 +1135,7 @@ class AgentService {
                 throw new Error("Service is busy. Please try again in 1 minute.");
             } 
             else if (error.status === 401) {
-                throw Error("Authentication failed. Please check API configuration.");
+                throw new Error("Authentication failed. Please check API configuration.");
             } 
             else {
                 throw new Error(`Chatbot failed: ${error.message}`);
