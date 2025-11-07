@@ -11,6 +11,11 @@ const semesterReportRoutes = require('./src/routes/semesterReport.route');
 const paymentRoutes = require('./src/routes/payment.route');
 const userRoutes = require('./src/routes/user.route');
 const chatbotRoutes = require('./src/routes/chatbot.route');
+const facilityRoutes = require('./src/routes/facility.route');
+const inventoryRoutes = require('./src/routes/inventory.route');
+const curriculumRoutes = require('./src/routes/curriculum.route');
+const scheduleRoutes = require('./src/routes/schedule.route');
+const attendanceRoutes = require('./src/routes/attendance.route');
 
 // Server configuration
 const port = process.env.PORT || 3000;
@@ -39,6 +44,11 @@ app.use("/api/semester-reports", semesterReportRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use('/api/facilities', facilityRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/curriculums', curriculumRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/attendances', attendanceRoutes);
 
 // Start payment scheduler
 startScheduler(); 
