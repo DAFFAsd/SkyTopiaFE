@@ -5,6 +5,8 @@ const { authMiddleware } = require('../middleware/auth');
 const { requireAdmin, requireParent, requireAnyRole } = require('../middleware/roleCheck');
 
 // Admin only routes
+router.post('/schedules/add', authMiddleware, requireAdmin, childController.addScheduleToChild);
+router.post('/schedules/remove', authMiddleware, requireAdmin, childController.removeScheduleFromChild);
 router.post('/', authMiddleware, requireAdmin, childController.createChild);
 router.get('/', authMiddleware, requireAdmin, childController.getAllChildren);
 router.put('/:id', authMiddleware, requireAdmin, childController.updateChild);

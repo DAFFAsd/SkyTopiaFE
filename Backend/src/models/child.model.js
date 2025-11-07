@@ -7,7 +7,8 @@ const childSchema = new mongoose.Schema({
     parent_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     medical_notes: { type: String },
     monthly_fee: { type: Number, default: 0 },
-    semester_fee: { type: Number, default: 0 },
+    semester_fee: { type: Number, default: 0 }, 
+    schedules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Schedule' }]
 }, { timestamps: true });
 
 const Child = mongoose.model("Child", childSchema);
