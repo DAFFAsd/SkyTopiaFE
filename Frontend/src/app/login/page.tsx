@@ -1,4 +1,3 @@
-// app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -11,16 +10,17 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null); 
-    const [isLoading, setIsLoading] = useState(false); 
-    
-    const router = useRouter(); 
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setIsLoading(true);
         setError(null);
 
+        // Pastiin ini port backend lo (3000)
         const API_URL = 'http://localhost:3000/api/users/login';
 
         try {
@@ -35,15 +35,31 @@ export default function LoginPage() {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-            throw new Error(data.message || 'Login gagal');
+            throw new Error(data.message || 'Login gagal. Periksa email atau password.');
         }
 
         console.log('Login successful:', data);
-        
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        router.push('/dashboard'); 
+        // ==========================================================
+        // --- LOGIKA REDIRECT BERDASARKAN ROLE (INI YANG BARU) ---
+        // ==========================================================
+        const userRole = data.user.role;
+
+        if (userRole === 'Admin') {
+            router.push('/adminDashboard'); // Ke dasbor Admin
+        } else if (userRole === 'Teacher') {
+            router.push('/teacherDashboard'); // Ke dasbor Guru
+        } else if (userRole === 'Parent') {
+            router.push('/parentDashboard'); // Ke dasbor Orang Tua
+        } else {
+            // Fallback kalo role-nya aneh
+            localStorage.clear(); // Bersihin login yang gagal
+            setError('Role pengguna tidak dikenal.');
+        }
+        // ==========================================================
 
         } catch (err: unknown) {
         let errorMessage = "Terjadi kesalahan tidak terduga.";
@@ -53,7 +69,7 @@ export default function LoginPage() {
         } else if (typeof err === 'string') {
             errorMessage = err;
         }
-        
+
         setError(errorMessage);
         console.error(err);
         } finally {
@@ -65,41 +81,41 @@ export default function LoginPage() {
         <div className="flex min-h-screen">
         {/* Bagian Kiri */}
         <div className="hidden pb-0 md:flex md:w-6/12 flex-col justify-center items-center bg-new-sky-blue p-12 text-brand-purple relative">
-        <div className="absolute top-12 left-20">
+            <div className="absolute top-12 left-20">
             <Image
-            src="/sun.svg"
-            alt="Sun illustration"
-            width={50}
-            height={50}
+                src="/sun.svg"
+                alt="Ilustrasi Matahari"
+                width={50}
+                height={50}
             />
-        </div>
+            </div>
 
-        <div className="max-w-sm">
+            <div className="max-w-sm">
             <h2 className="font-rammetto text-4xl mt-20 mb-6">
-            Give Your Child
-            The Best Care
+                Berikan Perawatan Terbaik
+                Untuk Anak Anda
             </h2>
             <p className="font-poppins text-md opacity-90">
-            Solusi digital terpercaya untuk memantau aktivitas dan perkembangan buah hati Anda.
+                Solusi digital terpercaya untuk memantau aktivitas dan perkembangan buah hati Anda.
             </p>
-        </div>
-        <div className="mt-10">
+            </div>
+            <div className="mt-10">
             <Image
-            src="/children.svg"
-            alt="Children illustration"
-            width={300}
-            height={200}
+                src="/children.svg"
+                alt="Ilustrasi Anak-anak"
+                width={300}
+                height={200}
             />
+            </div>
         </div>
 
-        </div>
         {/* Bagian Kanan */}
         <div className="w-full md:w-7/12 flex justify-center items-center bg-white p-8">
             <div className="w-full max-w-md rounded-2xl border border-form-stroke/15 p-10 shadow-xl">
             <div className="flex justify-center mb-8">
                 <Image
                 src="/skytopia-logo.svg"
-                alt="SkyTopia Logo"
+                alt="Logo SkyTopia"
                 width={220}
                 height={74}
                 />
@@ -137,7 +153,7 @@ export default function LoginPage() {
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                    Password
+                    Kata Sandi
                 </label>
                 <div className="relative group">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -169,52 +185,52 @@ export default function LoginPage() {
                     )}
                     </button>
                 </div>
-            </div>
+                </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center justify-between mb-6">
+                {/* Remember Me */}
+                <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
-                <input
+                    <input
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-login-pink focus:ring-login-pink"
-                />
-                <label
+                    />
+                    <label
                     htmlFor="remember-me"
                     className="ml-2 block text-sm text-gray-900"
-                >
-                    Ingat Password
-                </label>
+                    >
+                    Ingat saya
+                    </label>
                 </div>
-            </div>
-            {error && (
+                </div>
+                {error && (
                 <div className="mb-4 text-center text-sm text-red-600">
                     {error}
                 </div>
-            )}
+                )}
 
-            {/* Tombol Login */}
-            <div>
+                {/* Tombol Login */}
+                <div>
                 <button
                     type="submit"
                     disabled={isLoading}
                     className="flex w-full justify-center rounded-lg bg-login-pink py-3 px-4 text-sm font-semibold text-white shadow-sm hover:bg-opacity-90 focus:outline-none
                             disabled:cursor-not-allowed disabled:bg-pink-300"
                 >
-                    {isLoading ? 'Logging in...' : 'Login'}
+                    {isLoading ? 'Sedang masuk...' : 'Masuk'}
                 </button>
-            </div>
+                </div>
 
-            {/* Terms of Service */}
-            <p className="mt-10 text-center text-xs text-gray-400">
-                Dengan masuk ke SkyTopia, Anda setuju dengan {' '}
+                {/* Terms of Service */}
+                <p className="mt-10 text-center text-xs text-gray-400">
+                Dengan masuk ke SkyTopia, Anda setuju dengan{' '}
                 <Link href="#" className="font-medium underline">
-                ketentuan layanan kami.
+                    ketentuan layanan kami.
                 </Link>
-            </p>
+                </p>
             </form>
-        </div>
+            </div>
         </div>
         </div>
     );
