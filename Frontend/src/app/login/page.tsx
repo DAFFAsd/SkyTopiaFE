@@ -153,7 +153,7 @@ export default function LoginPage() {
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                    Kata Sandi
+                    Kata Sandi {/* <-- DIGANTI */}
                 </label>
                 <div className="relative group">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -200,7 +200,7 @@ export default function LoginPage() {
                     htmlFor="remember-me"
                     className="ml-2 block text-sm text-gray-900"
                     >
-                    Ingat saya
+                    Ingat saya {/* <-- DIGANTI */}
                     </label>
                 </div>
                 </div>
@@ -218,7 +218,7 @@ export default function LoginPage() {
                     className="flex w-full justify-center rounded-lg bg-login-pink py-3 px-4 text-sm font-semibold text-white shadow-sm hover:bg-opacity-90 focus:outline-none
                             disabled:cursor-not-allowed disabled:bg-pink-300"
                 >
-                    {isLoading ? 'Sedang masuk...' : 'Masuk'}
+                    {isLoading ? 'Sedang masuk...' : 'Masuk'} {/* <-- DIGANTI */}
                 </button>
                 </div>
 
