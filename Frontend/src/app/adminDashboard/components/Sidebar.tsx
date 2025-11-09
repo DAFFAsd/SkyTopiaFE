@@ -16,6 +16,8 @@ import {
     FiFilter,
     FiAward,
     FiSettings,
+    FiPackage,
+    FiBarChart,
 } from 'react-icons/fi';
 
 // Admin sidebar mirrors the dashboard sidebar but with 'Anak' and 'Guru' removed
@@ -26,13 +28,15 @@ const navLinks = [
     { name: 'Orang Tua', href: '/adminDashboard/parents', icon: FiUsers },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
     { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
+    { name: 'Permintaan Inventaris', href: '/adminDashboard/requests', icon: FiPackage },
+    { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
 ];
 
 const bottomLinks = [
     { name: 'Tagihan', href: '/dashboard/billing', icon: FiDollarSign, badge: 3 },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
 
     return (
@@ -88,7 +92,10 @@ export default function AdminSidebar() {
 
         <hr />
 
-            <button className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text">
+            <button
+                onClick={onToggle}
+                className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
+            >
             <FiArrowLeftCircle className="h-5 w-5" />
             <span>Sembunyikan</span>
             </button>

@@ -1,10 +1,366 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX } from 'react-icons/fi';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  createdAt: string;
+}
 
 export default function DatabasePage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'Teacher'
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to fetch users');
+      }
+
+      // Filter only teachers
+      const teachers = data.users.filter((user: User) => user.role === 'Teacher');
+      setUsers(teachers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingUser(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'Teacher'
+    });
+    setShowModal(true);
+  };
+
+  const openEditModal = (user: User) => {
+    setEditingUser(user);
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      password: '',
+      role: user.role
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingUser(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'Teacher'
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const url = editingUser
+        ? `http://localhost:3000/api/users/${editingUser.id}`
+        : 'http://localhost:3000/api/users/register';
+
+      const method = editingUser ? 'PUT' : 'POST';
+
+      const body = editingUser
+        ? { name: formData.name, phone: formData.phone, ...(formData.password && { password: formData.password }) }
+        : formData;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save user');
+      }
+
+      await fetchUsers(); // Refresh the list
+      closeModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this teacher?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/api/users/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete user');
+      }
+
+      setUsers(users.filter(user => user.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+        <div className="flex justify-center items-center py-8">
+          <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+        <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
-      <p className="text-gray-600">Placeholder page for teacher database management.</p>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+        <button
+          onClick={openAddModal}
+          className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
+        >
+          <FiPlus className="h-4 w-4" />
+          <span>Tambah Guru</span>
+        </button>
+      </div>
+
+      {users.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          Tidak ada data guru yang tersedia.
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nama
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Telepon
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tanggal Dibuat
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {user.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.phone || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Edit"
+                      >
+                        <FiEdit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete"
+                      >
+                        <FiTrash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-brand-purple">
+                {editingUser ? 'Edit Guru' : 'Tambah Guru'}
+              </h2>
+              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nama
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  disabled={!!editingUser}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple disabled:bg-gray-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telepon
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password {editingUser && '(kosongkan jika tidak ingin mengubah)'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required={!editingUser}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 bg-brand-purple text-white rounded-md hover:bg-opacity-90 disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {saving && <FiLoader className="animate-spin h-4 w-4" />}
+                  <span>{saving ? 'Menyimpan...' : 'Simpan'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
     </div>
   );

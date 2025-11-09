@@ -23,7 +23,7 @@ import {
     { name: 'Tagihan', href: '/dashboard/billing', icon: FiDollarSign, badge: 3 },
     ];
 
-    export default function Sidebar() {
+    export default function Sidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname(); 
 
     return (
@@ -84,7 +84,10 @@ import {
             
             <hr />
 
-            <button className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text">
+            <button
+                onClick={onToggle}
+                className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
+            >
             <FiArrowLeftCircle className="h-5 w-5" />
             <span>Sembunyikan</span>
             </button>

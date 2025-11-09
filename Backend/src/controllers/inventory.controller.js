@@ -87,3 +87,62 @@ exports.updateRequestStatus = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// Admin: get inventory requests report with stats
+exports.getRequestsReport = async (req, res) => {
+    try {
+        const { status, dateFilter } = req.query;
+
+        // Build filter query
+        let filter = {};
+        if (status && status !== 'all') {
+            filter.status = status;
+        }
+
+        // Date filter
+        if (dateFilter && dateFilter !== 'all') {
+            const now = new Date();
+            let startDate;
+
+            switch (dateFilter) {
+                case 'today':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    break;
+                case 'week':
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    break;
+            }
+
+            if (startDate) {
+                filter.createdAt = { $gte: startDate };
+            }
+        }
+
+        // Get filtered requests
+        const requests = await InventoryRequest.find(filter)
+            .populate('item requestedBy approvedBy', 'name email')
+            .sort({ createdAt: -1 });
+
+        // Calculate statistics
+        const total = await InventoryRequest.countDocuments();
+        const approved = await InventoryRequest.countDocuments({ status: 'Approved' });
+        const rejected = await InventoryRequest.countDocuments({ status: 'Rejected' });
+        const pending = await InventoryRequest.countDocuments({ status: 'Pending' });
+        const approvalRate = total > 0 ? Math.round((approved / (approved + rejected)) * 100) : 0;
+
+        const stats = {
+            total,
+            approved,
+            rejected,
+            pending,
+            approvalRate
+        };
+
+        res.json({ success: true, requests, stats });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
