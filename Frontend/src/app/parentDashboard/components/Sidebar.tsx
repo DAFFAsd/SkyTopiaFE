@@ -18,7 +18,7 @@ import {
 
     // === NAVIGASI KHUSUS PARENT ===
     const navLinks = [
-    { name: 'Dasbor', href: '/parentDashboard', icon: FiHome },
+    { name: 'Dashboard', href: '/parentDashboard', icon: FiHome },
     { name: 'Anak Saya', href: '/parentDashboard/my-children', icon: FiUsers },
     { name: 'Laporan Harian', href: '/parentDashboard/daily-reports', icon: FiClipboard },
     { name: 'Laporan Semester', href: '/parentDashboard/semester-reports', icon: FiBookOpen },
