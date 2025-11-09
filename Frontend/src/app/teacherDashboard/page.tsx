@@ -90,13 +90,13 @@ type User = {
                 title="Request Inventaris"
                 href="/teacherDashboard/inventory-request"
                 icon={FiArchive}
-                color="bg-stat-blue-bg/50"
+                color="bg-stat-pink-bg"
             />
             <TaskCard
                 title="Lapor Fasilitas"
                 href="/teacherDashboard/facility-report"
                 icon={FiAlertTriangle}
-                color="bg-stat-pink-bg"
+                color="bg-stat-blue-bg/50"
             />
             </div>
         </div>
