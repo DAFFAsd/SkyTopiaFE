@@ -13,7 +13,6 @@ router.delete('/items/:id', authMiddleware, requireAdmin, inventoryCtrl.deleteIt
 // Requests - Teacher creates, Admin manages
 router.post('/requests', authMiddleware, requireTeacher, inventoryCtrl.requestItem);
 router.get('/requests', authMiddleware, requireAdmin, inventoryCtrl.getRequests);
-router.get('/requests/report', authMiddleware, requireAdmin, inventoryCtrl.getRequestsReport);
 router.put('/requests/:id/status', authMiddleware, requireAdmin, inventoryCtrl.updateRequestStatus);
 
 module.exports = router;
