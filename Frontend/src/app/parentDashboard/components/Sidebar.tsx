@@ -34,7 +34,7 @@ import {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex">
+    <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex fixed h-screen">
         <div className="flex-1">
             <div className="mb-10 flex items-center justify-center">
             <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />

@@ -23,11 +23,9 @@ import {
 // Admin sidebar mirrors the dashboard sidebar but with 'Anak' and 'Guru' removed
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
-    { name: 'Kelas', href: '/adminDashboard/rooms', icon: FiGrid },
-    { name: 'Anak', href: '/adminDashboard/children', icon: FiUsers },
-    { name: 'Orang Tua', href: '/adminDashboard/parents', icon: FiUsers },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
     { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
+    { name: 'Kurikulum dan Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
     { name: 'Permintaan Inventaris', href: '/adminDashboard/requests', icon: FiPackage },
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
 ];
@@ -40,7 +38,7 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
 
     return (
-    <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex">
+    <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex fixed h-screen">
         <div className="flex-1">
             <div className="mb-10 flex items-center justify-center">
             <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />
