@@ -19,8 +19,8 @@ const rammetto = Rammetto_One({
 });
 
 export const metadata: Metadata = {
-  title: 'SkyTopia Login',
-  description: 'Login to SkyTopia',
+  title: 'SkyTopia ',
+  description: 'Platform manajemen daycare modern yang memudahkan pengelolaan anak, pembayaran, dan komunikasi dengan orang tua.',
 };
 
 export default function RootLayout({
