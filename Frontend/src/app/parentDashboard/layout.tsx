@@ -17,11 +17,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
             <div className={`transition-all duration-300 ${sidebarHidden ? 'w-0' : 'w-64'}`}>
                 {!sidebarHidden && <ParentSidebar onToggle={toggleSidebar} />}
             </div>
-
-            {/* DIV pembungkus <header> dan <main> udah dihapus.
-                <main> sekarang jadi anak langsung dari <div flex ...>
-            */}
-            <main className="flex-1 overflow-y-auto p-8 relative">
+            <main className="flex-1 overflow-y-auto p-8 scroll-smooth">
                 {sidebarHidden && (
                     <button
                         onClick={toggleSidebar}
@@ -36,3 +32,4 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         </div>
     );
 }
+
