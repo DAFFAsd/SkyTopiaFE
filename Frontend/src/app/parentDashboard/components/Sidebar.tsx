@@ -95,10 +95,7 @@ import {
             <span>Sembunyikan</span>
             </button>
             
-            <div className="flex items-center justify-around text-sidebar-text">
-            {/* Ikon Setting (contoh) */}
-            <FiSettings className="h-5 w-5 hover:text-active-pink-text" />
-            </div>
+            <div className="flex items-center justify-around text-sidebar-text"></div>
         </div>
         </aside>
     );

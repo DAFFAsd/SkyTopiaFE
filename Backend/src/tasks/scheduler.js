@@ -64,7 +64,7 @@ const checkAndUpdateOverdue = async () => {
         // Update payments past their due_date to 'Overdue'
         const result = await Payment.updateMany(
             { 
-                status: { $in: ["Tertunda", "Terkirim"] }, 
+                status: "Tertunda",
                 due_date: { $lt: today } 
             },
             { 
