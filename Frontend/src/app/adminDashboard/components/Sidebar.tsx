@@ -7,8 +7,6 @@ import { usePathname } from 'next/navigation';
 
 import {
     FiHome,
-    FiGrid,
-    FiUsers,
     FiUser,
     FiCalendar,
     FiDollarSign,
@@ -31,7 +29,7 @@ const navLinks = [
 ];
 
 const bottomLinks = [
-    { name: 'Tagihan', href: '/dashboard/billing', icon: FiDollarSign, badge: 3 },
+    { name: 'Tagihan', href: '/adminDashboard/billing', icon: FiDollarSign },
 ];
 
 export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
@@ -80,11 +78,6 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
                 <link.icon className="h-5 w-5" />
                 <span>{link.name}</span>
                 </div>
-                {link.badge && (
-                <span className="rounded-full bg-brand-purple px-2 py-0.5 text-xs text-white">
-                    {link.badge}
-                </span>
-                )}
             </Link>
         ))}
 
