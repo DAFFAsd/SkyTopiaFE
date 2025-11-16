@@ -71,7 +71,7 @@ import {
     { id: 'fine_motor', title: 'Motorik Halus', icon: FiEdit2, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500', enumType: BANTUAN_OPTIONS, keys: ['memindahkan_benda', 'membuka_tutup_gelas', 'meremas_kertas_dan_spons', 'merobek_kertas', 'menyusun_menara_balok', 'membuka_retseleting', 'menutup_retseleting', 'mencoret_bebas', 'membuka_tutup_gunting', 'membalik_halaman_buku', 'melipat_kertas', 'koordinasi_jari_tangan', 'menempel_kertas', 'menggunting_tanpa_pola', 'memegang_krayon', 'menarik_garis', 'memegang_benda_kecil'] },
     { id: 'independence', title: 'Kemandirian', icon: FiShield, bgColor: 'bg-stat-pink-bg', iconColor: 'text-pink-500', enumType: BANTUAN_OPTIONS, keys: ['melepas_sepatu_tak_bertali', 'memakai_sepatu_tak_bertali', 'meletakkan_sandal_tas', 'mengembalikan_mainan', 'memakai_sandal', 'mengeluarkan_tempat_makan', 'memasukkan_tempat_makan', 'mencuci_tangan', 'membuang_sampah', 'menggunakan_sendok', 'menaik_turunkan_celana', 'menyuap_makanan_sendiri', 'minum_dari_gelas', 'duduk_tenang_saat_makan', 'bak_bab_di_kloset', 'menyikat_gigi_dengan_bantuan', 'melepas_baju_tanpa_kancing', 'memasukkan_tangan_ke_baju', 'memasukkan_kaki_ke_celana'] },
     { id: 'art', title: 'Seni', icon: FiPenTool, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500', enumType: BANTUAN_OPTIONS, keys: ['menari_mengikuti_irama', 'membuat_coretan_dengan_kuas', 'membuat_bentuk_plastisin', 'bernyanyi_lagu'] },
-    { id: 'teacher_notes', title: 'Catatan Guru', icon: FiFileText, bgColor: 'bg-green-100', iconColor: 'text-green-600', enumType: [], keys: [] },
+    { id: 'teacher_notes', title: 'Catatan Guru', icon: FiFileText, bgColor: 'bg-yellow-100', iconColor: 'text-yellow-600', enumType: [], keys: [] },
     ];
 
     const formatKeyName = (key: string) => {
@@ -208,6 +208,7 @@ import {
     };
 
     export default function CreateSemesterReportPage() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const router = useRouter();
     const [children, setChildren] = useState<Child[]>([]);
     const [myReports, setMyReports] = useState<SemesterReport[]>([]);
