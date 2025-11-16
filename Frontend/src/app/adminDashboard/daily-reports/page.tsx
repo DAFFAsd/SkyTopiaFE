@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { 
     FiArrowLeft, FiSearch, FiBookOpen, FiLoader, FiUser, 
     FiFilter,  FiSmile, FiZap, FiMessageSquare, FiCoffee, 
-} from 'react-icons/fi'; // Menambahkan beberapa ikon baru
+} from 'react-icons/fi'; 
 
-// --- (1) TIPE DATA SESUAI BACKEND ---
 interface Child {
     _id: string;
     name: string;
@@ -32,21 +31,19 @@ interface DailyReport {
     special_notes: string;
     createdAt: string;
 }
-// ------------------------------------
 
 export default function AdminDailyReportsPage() {
     const [reports, setReports] = useState<DailyReport[]>([]);
-    const [children, setChildren] = useState<Child[]>([]); // Data untuk filter anak
-    const [teachers, setTeachers] = useState<Teacher[]>([]); // Data untuk filter guru
+    const [children, setChildren] = useState<Child[]>([]);
+    const [teachers, setTeachers] = useState<Teacher[]>([]); 
     
     const [filterChildId, setFilterChildId] = useState('');
     const [filterTeacherId, setFilterTeacherId] = useState('');
     
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [allReports, setAllReports] = useState<DailyReport[]>([]); // Menyimpan semua data mentah
+    const [allReports, setAllReports] = useState<DailyReport[]>([]); 
 
-    // --- (2) FETCH DATA UTAMA (Reports, Anak, Guru) ---
     const fetchAllData = useCallback(async () => {
         setIsLoading(true);
         setError('');
@@ -56,20 +53,17 @@ export default function AdminDailyReportsPage() {
             
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Fetch Laporan Harian (Admin Endpoint)
             const reportsRes = await fetch('http://localhost:3000/api/daily-reports', { headers });
             const reportsData = await reportsRes.json();
             
-            // Fetch Data Anak (Untuk Filter Dropdown)
             const childrenRes = await fetch('http://localhost:3000/api/children', { headers });
             const childrenData = await childrenRes.json();
 
             if (reportsData.success) {
                 const fetchedReports: DailyReport[] = reportsData.reports;
                 setAllReports(fetchedReports);
-                setReports(fetchedReports); // Awalnya tampilkan semua
+                setReports(fetchedReports); 
                 
-                // Ekstrak list unik guru dari laporan untuk filter dropdown
                 const uniqueTeachersMap = new Map<string, Teacher>();
                 fetchedReports.forEach(r => {
                     if (r.teacher_id) {
@@ -94,7 +88,6 @@ export default function AdminDailyReportsPage() {
         }
     }, []);
 
-    // --- (3) LOGIC FILTER DI FRONTEND ---
     useEffect(() => {
         let filtered = allReports;
 
@@ -105,7 +98,6 @@ export default function AdminDailyReportsPage() {
             filtered = filtered.filter(r => r.teacher_id && r.teacher_id._id === filterTeacherId);
         }
         
-        // Urutkan dari yang terbaru (tanggal laporan)
         const sortedReports = filtered.sort((a: DailyReport, b: DailyReport) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setReports(sortedReports);
     }, [filterChildId, filterTeacherId, allReports]);
@@ -144,7 +136,6 @@ export default function AdminDailyReportsPage() {
                 <div className="rounded-lg bg-red-50 p-4 text-red-700">{error}</div>
             )}
 
-            {/* --- (4) FILTER BAR --- */}
             <div className="rounded-xl bg-gradient-to-br from-login-pink/10 to-brand-purple/10 p-6 shadow-lg border border-brand-purple/20">
                 <div className="flex items-center space-x-3 text-brand-purple font-rammetto text-xl mb-4">
                     <FiFilter className="h-6 w-6 text-login-pink" />
@@ -166,7 +157,6 @@ export default function AdminDailyReportsPage() {
                             ))}
                         </select>
                     </div>
-                    {/* Filter Guru */}
                     <div>
                         <label htmlFor="teacherFilter" className="block text-sm font-medium text-gray-700">Pilih Guru</label>
                         <select
@@ -181,7 +171,6 @@ export default function AdminDailyReportsPage() {
                             ))}
                         </select>
                     </div>
-                    {/* Total Laporan Ditemukan */}
                     <div className="flex items-end">
                         <div className="rounded-lg bg-brand-purple text-white p-4 w-full border border-brand-purple/50 shadow-md">
                             <p className="text-xs font-light opacity-80">Total Laporan Ditemukan</p>
@@ -191,7 +180,6 @@ export default function AdminDailyReportsPage() {
                 </div>
             </div>
 
-            {/* --- (5) REPORTS LIST --- */}
             {isLoading ? (
                 <div className="rounded-lg bg-white p-8 shadow-sm text-center border border-gray-200">
                     <div className="flex justify-center items-center text-brand-purple">
@@ -203,7 +191,6 @@ export default function AdminDailyReportsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Layout grid untuk card */}
                     {reports.map((report) => (
                         <div key={report._id} className="rounded-xl bg-white p-6 shadow-lg border border-login-pink/30 hover:shadow-xl transform hover:scale-[1.01] transition-all duration-200 ease-in-out">
-                            {/* Header Laporan */}
                             <div className="flex items-center justify-between mb-4 pb-4 border-b border-brand-purple/20">
                                 <div className="flex items-center space-x-3">
                                     <FiUser className="h-6 w-6 text-brand-purple" />
@@ -221,9 +208,7 @@ export default function AdminDailyReportsPage() {
                                 </div>
                             </div>
 
-                            {/* Konten Detil */}
                             <div className="space-y-4 text-sm">
-                                {/* Tema */}
                                 <div className="p-3 bg-brand-purple/5 rounded-lg border border-brand-purple/10">
                                     <h5 className="font-semibold text-brand-purple flex items-center mb-1">
                                         <FiBookOpen className="h-4 w-4 mr-2 text-login-pink" /> Tema Hari Ini
@@ -233,7 +218,6 @@ export default function AdminDailyReportsPage() {
                                     </p>
                                 </div>
                                 
-                                {/* Perkembangan Fisik & Kognitif */}
                                 <div className="p-3 bg-login-pink/5 rounded-lg border border-login-pink/10">
                                     <h5 className="font-semibold text-login-pink flex items-center mb-1">
                                         <FiZap className="h-4 w-4 mr-2 text-brand-purple" /> Perkembangan
@@ -246,7 +230,6 @@ export default function AdminDailyReportsPage() {
                                     </p>
                                 </div>
 
-                                {/* Sosial-Emosional & Tidur */}
                                 <div className="p-3 bg-brand-purple/5 rounded-lg border border-brand-purple/10">
                                     <h5 className="font-semibold text-brand-purple flex items-center mb-1">
                                         <FiSmile className="h-4 w-4 mr-2 text-login-pink" /> Perilaku & Istirahat
@@ -259,7 +242,6 @@ export default function AdminDailyReportsPage() {
                                     </p>
                                 </div>
 
-                                {/* Makanan */}
                                 {(report.meals?.snack || report.meals?.lunch) && (
                                     <div className="p-3 bg-login-pink/5 rounded-lg border border-login-pink/10">
                                         <h5 className="font-semibold text-login-pink flex items-center mb-1">
@@ -271,7 +253,6 @@ export default function AdminDailyReportsPage() {
                                 )}
                             </div>
                             
-                            {/* Catatan Khusus */}
                             {report.special_notes && (
                                 <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50 p-3 rounded-b-lg">
                                     <h5 className="font-semibold text-brand-purple flex items-center mb-1">
