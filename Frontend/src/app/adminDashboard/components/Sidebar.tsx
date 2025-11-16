@@ -11,9 +11,6 @@ import {
     FiCalendar,
     FiDollarSign,
     FiArrowLeftCircle,
-    FiFilter,
-    FiAward,
-    FiSettings,
     FiPackage,
     FiBarChart,
 } from 'react-icons/fi';
@@ -89,12 +86,6 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
             <FiArrowLeftCircle className="h-5 w-5" />
             <span>Sembunyikan</span>
             </button>
-
-            <div className="flex items-center justify-around text-sidebar-text">
-            <FiFilter className="h-5 w-5 hover:text-active-pink-text" />
-            <FiAward className="h-5 w-5 hover:text-active-pink-text" />
-            <FiSettings className="h-5 w-5 hover:text-active-pink-text" />
-            </div>
         </div>
         </aside>
     );
