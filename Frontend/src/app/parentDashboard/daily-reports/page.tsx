@@ -1,14 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-// --- (1) TAMBAHIN FiUser ---
 import { 
     FiArrowLeft, FiCalendar, FiActivity, FiBookOpen, 
-    FiSunrise, FiMoon, FiFileText, FiHeart, FiUser 
+    FiSunrise, FiMoon, FiFileText, FiHeart, FiUser, FiCoffee 
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
-// --- Interface (SAMA) ---
 interface Child {
     _id: string;
     name: string;
@@ -18,6 +16,8 @@ interface Teacher {
     name: string;
     email: string;
 }
+
+// --- (2) INTERFACE DAILY REPORT DIBENERIN ---
 interface DailyReport {
     _id: string;
     child_id: Child;
@@ -28,7 +28,10 @@ interface DailyReport {
     physical_motor: string;
     cognitive: string;
     social_emotional: string;
-    meals?: string; 
+    meals?: { // <-- Diganti jadi object
+        snack: string;
+        lunch: string;
+    };
     nap_duration: string;
     special_notes: string;
     createdAt: string;
@@ -42,7 +45,7 @@ export default function DailyReportsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // --- (fetchChildren & fetchReports SAMA PERSIS, GAK DIUBAH) ---
+    // --- (fetchChildren & fetchReports SAMA PERSIS) ---
     const fetchChildren = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -112,7 +115,7 @@ export default function DailyReportsPage() {
     const filteredReports = reports.filter(report => report.child_id._id === selectedChildId);
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
+         return new Date(dateString).toLocaleDateString('id-ID', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -130,11 +133,11 @@ export default function DailyReportsPage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
 
-            <h1 className="text-3xl font-bold text-brand-purple">
+            <h1 className="font-rammetto text-3xl font-bold text-brand-purple">
                 Laporan Harian
             </h1>
 
-            {/* --- (2) GANTI DROPDOWN JADI KOTAK-KOTAK LUCU --- */}
+            {/* --- Kotak Filter Anak (SAMA) --- */}
             {children.length > 0 && (
                 <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
                     <label className="block text-sm font-medium text-brand-purple mb-3">
@@ -173,11 +176,12 @@ export default function DailyReportsPage() {
                 <div className="rounded-lg bg-white p-8 shadow-sm text-center">
                     <div className="text-gray-600">Memuat laporan harian...</div>
                 </div>
-            ) : filteredReports.length > 0 ? (
+            ) : 
+            filteredReports.length > 0 ? (
                 <div className="space-y-4">
                     {filteredReports.map((report) => (
-                        <div key={report._id} className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-                            {/* Header Laporan */}
+                        <div key={report._id} className="rounded-xl bg-white p-6 shadow-sm border border-brand-purple/20">
+                            {/* Header Laporan (SAMA) */}
                             <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                                 <div className="flex items-center space-x-3">
                                     <FiCalendar className="h-5 w-5 text-brand-purple" />
@@ -192,7 +196,7 @@ export default function DailyReportsPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                 
-                                {/* --- (3) KOLOM KIRI (WARNA JUDUL & IKON DIGANTI) --- */}
+                                {/* --- (3) KOLOM KIRI (DITAMBAHIN MEALS) --- */}
                                 <div className="space-y-4">
                                     <div className="flex items-start space-x-3">
                                         <FiBookOpen className="h-5 w-5 text-login-pink mt-0.5" />
@@ -203,6 +207,24 @@ export default function DailyReportsPage() {
                                         </div>
                                     </div>
                                     
+                                    {/* --- BLOK MEALS BARU --- */}
+                                    {/* Cek dulu kalo 'meals' ada, karena data lama nggak punya */}
+                                    {report.meals && (
+                                        <div className="flex items-start space-x-3">
+                                            <FiCoffee className="h-5 w-5 text-yellow-600 mt-0.5" />
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-brand-purple">Makanan</h4>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    <span className="font-medium">Camilan:</span> {report.meals.snack || '-'}
+                                                </p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    <span className="font-medium">Makan Siang:</span> {report.meals.lunch || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* --- AKHIR BLOK MEALS --- */}
+
                                     <div className="flex items-start space-x-3">
                                         <FiMoon className="h-5 w-5 text-blue-500 mt-0.5" />
                                         <div>
@@ -222,7 +244,7 @@ export default function DailyReportsPage() {
                                     )}
                                 </div>
                                 
-                                {/* --- (3) KOLOM KANAN (WARNA JUDUL & IKON DIGANTI) --- */}
+                                {/* Kolom Kanan (SAMA) */}
                                 <div className="space-y-4">
                                     <div className="flex items-start space-x-3">
                                         <FiActivity className="h-5 w-5 text-blue-500 mt-0.5" />
@@ -249,7 +271,6 @@ export default function DailyReportsPage() {
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     ))}
                 </div>
