@@ -12,7 +12,6 @@ type User = {
     role: string;
     };
 
-    // Komponen Kartu Tugas
     function TaskCard({ title, href, icon: Icon, color }: { title: string; href: string; icon: any; color: string }) {
     return (
         <Link
@@ -29,7 +28,6 @@ type User = {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        // Ambil data user dari localStorage
         const userString = localStorage.getItem('user');
         if (userString) {
         setUser(JSON.parse(userString));
@@ -38,7 +36,6 @@ type User = {
 
     return (
         <div className="space-y-8">
-        {/* Banner Sambutan */}
         <div className="relative rounded-lg bg-welcome-yellow p-8">
             <div className="max-w-md">
             <h3 className="text-2xl font-semibold text-brand-purple ml-5">
@@ -58,7 +55,6 @@ type User = {
             </div>
         </div>
 
-        {/* Daftar Tugas Cepat */}
         <div>
             <h3 className="text-xl font-bold text-brand-purple mb-4">Tugas Utama</h3>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

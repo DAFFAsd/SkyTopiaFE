@@ -172,7 +172,6 @@ export default function ChildDetailPage() {
                 Detail Anak: {child.name}
             </h1>
 
-            {/* Child Info Card */}
             <div className="rounded-lg bg-white p-8 shadow-sm">
                 <div className="flex items-start space-x-6">
                     <div className="flex-shrink-0">
@@ -237,7 +236,6 @@ export default function ChildDetailPage() {
                 </div>
             </div>
 
-            {/* Schedule Section */}
             <div className="rounded-lg bg-white p-8 shadow-sm">
                 <h3 className="text-xl font-semibold text-brand-purple mb-6">Jadwal Kegiatan</h3>
 

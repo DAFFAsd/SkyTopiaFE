@@ -17,7 +17,6 @@ interface Teacher {
     email: string;
 }
 
-// --- (2) INTERFACE DAILY REPORT DIBENERIN ---
 interface DailyReport {
     _id: string;
     child_id: Child;
@@ -28,7 +27,7 @@ interface DailyReport {
     physical_motor: string;
     cognitive: string;
     social_emotional: string;
-    meals?: { // <-- Diganti jadi object
+    meals?: { 
         snack: string;
         lunch: string;
     };
@@ -36,7 +35,6 @@ interface DailyReport {
     special_notes: string;
     createdAt: string;
 }
-// ------------------------------------------
 
 export default function DailyReportsPage() {
     const [reports, setReports] = useState<DailyReport[]>([]);
@@ -45,7 +43,6 @@ export default function DailyReportsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // --- (fetchChildren & fetchReports SAMA PERSIS) ---
     const fetchChildren = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -115,7 +112,7 @@ export default function DailyReportsPage() {
     const filteredReports = reports.filter(report => report.child_id._id === selectedChildId);
 
     const formatDate = (dateString: string) => {
-         return new Date(dateString).toLocaleDateString('id-ID', {
+        return new Date(dateString).toLocaleDateString('id-ID', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -137,7 +134,6 @@ export default function DailyReportsPage() {
                 Laporan Harian
             </h1>
 
-            {/* --- Kotak Filter Anak (SAMA) --- */}
             {children.length > 0 && (
                 <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
                     <label className="block text-sm font-medium text-brand-purple mb-3">
@@ -152,7 +148,7 @@ export default function DailyReportsPage() {
                                     flex items-center space-x-2 rounded-lg py-2 px-4 font-semibold
                                     transition-all duration-200 ease-in-out border
                                     ${
-                                      selectedChildId === child._id
+                                    selectedChildId === child._id
                                         ? 'bg-login-pink text-white shadow-lg transform scale-105 border-transparent'
                                         : 'bg-white text-brand-purple border-gray-200 hover:bg-pink-50 hover:border-pink-300'
                                     }
@@ -181,7 +177,6 @@ export default function DailyReportsPage() {
                 <div className="space-y-4">
                     {filteredReports.map((report) => (
                         <div key={report._id} className="rounded-xl bg-white p-6 shadow-sm border border-brand-purple/20">
-                            {/* Header Laporan (SAMA) */}
                             <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                                 <div className="flex items-center space-x-3">
                                     <FiCalendar className="h-5 w-5 text-brand-purple" />
@@ -196,7 +191,6 @@ export default function DailyReportsPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                 
-                                {/* --- (3) KOLOM KIRI (DITAMBAHIN MEALS) --- */}
                                 <div className="space-y-4">
                                     <div className="flex items-start space-x-3">
                                         <FiBookOpen className="h-5 w-5 text-login-pink mt-0.5" />
@@ -207,8 +201,6 @@ export default function DailyReportsPage() {
                                         </div>
                                     </div>
                                     
-                                    {/* --- BLOK MEALS BARU --- */}
-                                    {/* Cek dulu kalo 'meals' ada, karena data lama nggak punya */}
                                     {report.meals && (
                                         <div className="flex items-start space-x-3">
                                             <FiCoffee className="h-5 w-5 text-yellow-600 mt-0.5" />
@@ -223,7 +215,6 @@ export default function DailyReportsPage() {
                                             </div>
                                         </div>
                                     )}
-                                    {/* --- AKHIR BLOK MEALS --- */}
 
                                     <div className="flex items-start space-x-3">
                                         <FiMoon className="h-5 w-5 text-blue-500 mt-0.5" />
@@ -244,7 +235,6 @@ export default function DailyReportsPage() {
                                     )}
                                 </div>
                                 
-                                {/* Kolom Kanan (SAMA) */}
                                 <div className="space-y-4">
                                     <div className="flex items-start space-x-3">
                                         <FiActivity className="h-5 w-5 text-blue-500 mt-0.5" />

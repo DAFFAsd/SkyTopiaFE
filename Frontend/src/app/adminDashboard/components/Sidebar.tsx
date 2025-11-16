@@ -18,7 +18,6 @@ import {
     FiBarChart,
 } from 'react-icons/fi';
 
-// Admin sidebar mirrors the dashboard sidebar but with 'Anak' and 'Guru' removed
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },

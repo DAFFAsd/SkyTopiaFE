@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-// Import ikon-ikon yang kita butuhin
 import {
     FiHome,
     FiClipboard,
@@ -17,7 +16,6 @@ import {
     FiSettings,
     } from 'react-icons/fi';
 
-    // === NAVIGASI KHUSUS TEACHER ===
     const navLinks = [
     { name: 'Dashboard', href: '/teacherDashboard', icon: FiHome },
     { name: 'Buat Laporan Harian', href: '/teacherDashboard/daily-report', icon: FiClipboard },
@@ -30,7 +28,6 @@ import {
     { name: 'Minta Inventaris', href: '/teacherDashboard/inventory-request', icon: FiArchive },
     { name: 'Lapor Fasilitas', href: '/teacherDashboard/facility-report', icon: FiAlertTriangle },
     ];
-    // =============================
 
     export default function TeacherSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
@@ -42,7 +39,6 @@ import {
             <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />
             </div>
 
-            {/* Navigasi Utama */}
             <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
                 const isActive = pathname === link.href || (link.href !== '/teacherDashboard' && pathname.startsWith(link.href));
@@ -67,7 +63,6 @@ import {
             </nav>
         </div>
 
-        {/* Navigasi Bawah */}
         <div className="flex flex-col space-y-4">
             {bottomLinks.map((link) => (
             <Link

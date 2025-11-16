@@ -121,10 +121,8 @@ export default function SemesterReportsPage() {
     const ChecklistSection = ({ title, data, id }: { title: string; data: ChecklistItem; id: string }) => (
         <div id={id} className="py-4 scroll-mt-20"> 
         
-        {/* --- UBAH BARIS INI --- */}
         <h4 className="text-xl font-bold text-brand-purple border-b border-gray-200 pb-3 mb-4">{title}</h4>
         
-        {/* Hapus 'mt-3' dari div di bawah karena udah di-handle 'mb-4' di atas */}
         <div className="space-y-2"> 
             {Object.entries(data).map(([key, value]) => (
             <div key={key} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50">

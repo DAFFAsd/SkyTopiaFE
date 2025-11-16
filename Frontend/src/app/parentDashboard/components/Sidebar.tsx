@@ -13,10 +13,8 @@ import {
     FiDollarSign,
     FiMessageSquare,
     FiArrowLeftCircle,
-    FiSettings,
     } from 'react-icons/fi';
 
-    // === NAVIGASI KHUSUS PARENT ===
     const navLinks = [
     { name: 'Dashboard', href: '/parentDashboard', icon: FiHome },
     { name: 'Anak Saya', href: '/parentDashboard/my-children', icon: FiUsers },
@@ -28,7 +26,6 @@ import {
     { name: 'Tagihan', href: '/parentDashboard/billing', icon: FiDollarSign },
     { name: 'Chatbot', href: '/parentDashboard/chatbot', icon: FiMessageSquare },
     ];
-    // =============================
 
     export default function ParentSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
@@ -40,10 +37,8 @@ import {
             <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />
             </div>
 
-            {/* Navigasi Utama */}
             <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
-                // Modifikasi: Cek /parentDashboard/my-children/[id]
                 const isActive = pathname === link.href || (link.href !== '/parentDashboard' && pathname.startsWith(link.href));
                 
                 return (
@@ -66,7 +61,6 @@ import {
             </nav>
         </div>
 
-        {/* Navigasi Bawah */}
         <div className="flex flex-col space-y-4">
             {bottomLinks.map((link) => (
             <Link

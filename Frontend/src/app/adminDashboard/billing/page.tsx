@@ -1,6 +1,5 @@
 'use client';
 
-// --- (1. BARU) Import 'useCallback' dan 'useRef' ---
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,7 +8,6 @@ import {
     FiXCircle, FiEye, FiCheck, FiX, FiList 
 } from 'react-icons/fi';
 
-// --- (Interface SAMA) ---
 interface Child {
     _id: string;
     name: string;
@@ -28,7 +26,6 @@ interface Payment {
 }
 
 export default function AdminBillingPage() {
-    // --- (State 'allPayments' dan 'filteredPayments') ---
     const [allPayments, setAllPayments] = useState<Payment[]>([]); 
     const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]); 
     
@@ -46,10 +43,7 @@ export default function AdminBillingPage() {
     const paymentsListRef = useRef<HTMLDivElement>(null);
     const isInitialLoad = useRef(true);
 
-    // --- (2. DIUBAH) Bungkus fetchPayments pake useCallback ---
-    // 'useCallback' "ngunci" fungsi ini biar nggak dibuat ulang setiap render
     const fetchPayments = useCallback(async () => {
-        // Hapus setIsFiltering(true) dari sini biar nggak ngedip pas load
         setError('');
         try {
             const token = localStorage.getItem('token');
@@ -66,7 +60,7 @@ export default function AdminBillingPage() {
 
             const data = await response.json();
             if (data.success) {
-                setAllPayments(data.payments); // Simpen di state 'allPayments'
+                setAllPayments(data.payments); 
             } else {
                 setError(data.message || 'Gagal mengambil data pembayaran');
             }
@@ -76,27 +70,20 @@ export default function AdminBillingPage() {
         } finally {
             setIsLoading(false); 
         }
-    // 'useCallback' ini nggak bergantung sama state apa-apa, jadi dependency-nya []
     }, []); 
 
-    // --- (3. DIUBAH) 'useEffect' ini sekarang aman ---
-    // Ini buat nge-fetch data SEKALI AJA pas halaman dibuka
     useEffect(() => {
         fetchPayments();
-    }, [fetchPayments]); // <-- 'fetchPayments' sekarang aman dijadiin dependency
+    }, [fetchPayments]); 
 
-
-    // --- (4. BARU) 'useEffect' ini jalan tiap kali filter ATAU data utama berubah ---
     useEffect(() => {
-        // Jangan jalanin ini pas pertama kali load
         if (isInitialLoad.current) {
-            isInitialLoad.current = false; // Tandain kalo udah nggak load awal
-            // Khusus load awal, kita set filter 'Terkirim'
+            isInitialLoad.current = false; 
             setFilteredPayments(allPayments.filter(p => p.status === 'Terkirim'));
             return; 
         }
 
-        setIsFiltering(true); // Mulai filtering
+        setIsFiltering(true); 
         
         setTimeout(() => {
             if (filterStatus === 'Semua') {
@@ -111,13 +98,12 @@ export default function AdminBillingPage() {
                 const filtered = allPayments.filter(p => p.status === filterStatus);
                 setFilteredPayments(filtered);
             }
-            setIsFiltering(false); // Selesai filtering
+            setIsFiltering(false); 
         }, 300);
         
-    }, [filterStatus, allPayments]); // <-- Kuncinya di sini
+    }, [filterStatus, allPayments]); 
 
 
-    // --- (handleUpdateStatus & helper functions SAMA PERSIS) ---
     const handleUpdateStatus = async (paymentId: string, status: 'Dibayar' | 'Ditolak', reason: string = '') => {
         setIsSubmitting(true);
         try {
@@ -182,7 +168,6 @@ export default function AdminBillingPage() {
         return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    // --- (Kalkulasi statistik SAMA) ---
     const totalPending = allPayments.filter(p => p.status === 'Tertunda' || p.status === 'Terkirim').length;
     const totalPaid = allPayments.filter(p => p.status === 'Dibayar').length;
     const totalOverdue = allPayments.filter(p => p.status === 'Jatuh Tempo' || p.status === 'Ditolak').length;
@@ -213,7 +198,6 @@ export default function AdminBillingPage() {
 
             {error && ( <div className="rounded-lg bg-red-50 p-4 text-red-700">{error}</div> )}
 
-            {/* --- (Statistics Cards SAMA) --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                     type="button"
@@ -292,8 +276,6 @@ export default function AdminBillingPage() {
                 </button>
             </div>
 
-
-            {/* --- (DAFTAR PEMBAYARAN SAMA) --- */}
             <div ref={paymentsListRef} className="scroll-mt-5">
                 {isLoading ? (
                     <div className="rounded-lg bg-white p-8 shadow-sm text-center">
@@ -305,7 +287,6 @@ export default function AdminBillingPage() {
                         {filteredPayments.length > 0 ? (
                             filteredPayments.map((payment) => (
                                 <div key={payment._id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-                                    {/* ... (Sisa kode dalemnya SAMA PERSIS) ... */}
                                     <div className="flex flex-wrap items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-3 mb-3">
@@ -388,7 +369,6 @@ export default function AdminBillingPage() {
             </div>
         </div>
 
-        {/* --- (Modal SAMA PERSIS) --- */}
         {viewingProof && (
             <div 
                 className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"

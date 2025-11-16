@@ -20,7 +20,6 @@ export default function LoginPage() {
         setIsLoading(true);
         setError(null);
 
-        // Pastiin ini port backend lo (3000)
         const API_URL = 'http://localhost:3000/api/users/login';
 
         try {
@@ -43,23 +42,18 @@ export default function LoginPage() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        // ==========================================================
-        // --- LOGIKA REDIRECT BERDASARKAN ROLE (INI YANG BARU) ---
-        // ==========================================================
         const userRole = data.user.role;
 
         if (userRole === 'Admin') {
-            router.push('/adminDashboard'); // Ke dasbor Admin
+            router.push('/adminDashboard'); 
         } else if (userRole === 'Teacher') {
-            router.push('/teacherDashboard'); // Ke dasbor Guru
+            router.push('/teacherDashboard'); 
         } else if (userRole === 'Parent') {
-            router.push('/parentDashboard'); // Ke dasbor Orang Tua
+            router.push('/parentDashboard'); 
         } else {
-            // Fallback kalo role-nya aneh
-            localStorage.clear(); // Bersihin login yang gagal
+            localStorage.clear(); 
             setError('Role pengguna tidak dikenal.');
         }
-        // ==========================================================
 
         } catch (err: unknown) {
         let errorMessage = "Terjadi kesalahan tidak terduga.";
@@ -79,7 +73,6 @@ export default function LoginPage() {
 
     return (
         <div className="flex min-h-screen">
-        {/* Bagian Kiri */}
         <div className="hidden pb-0 md:flex md:w-6/12 flex-col justify-center items-center bg-new-sky-blue p-12 text-brand-purple relative">
             <div className="absolute top-12 left-20">
             <Image
@@ -109,7 +102,6 @@ export default function LoginPage() {
             </div>
         </div>
 
-        {/* Bagian Kanan */}
         <div className="w-full md:w-7/12 flex justify-center items-center bg-white p-8">
             <div className="w-full max-w-md rounded-2xl border border-form-stroke/15 p-10 shadow-xl">
             <div className="flex justify-center mb-8">
@@ -122,7 +114,6 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
-                {/* Input Email */}
                 <div className="mb-4">
                 <label
                     htmlFor="email"
@@ -147,13 +138,12 @@ export default function LoginPage() {
                 </div>
                 </div>
 
-                {/* Input Password */}
                 <div className="mb-4">
                 <label
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                    Kata Sandi {/* <-- DIGANTI */}
+                    Kata Sandi 
                 </label>
                 <div className="relative group">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -187,7 +177,6 @@ export default function LoginPage() {
                 </div>
                 </div>
 
-                {/* Remember Me */}
                 <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                     <input
@@ -200,7 +189,7 @@ export default function LoginPage() {
                     htmlFor="remember-me"
                     className="ml-2 block text-sm text-gray-900"
                     >
-                    Ingat saya {/* <-- DIGANTI */}
+                    Ingat saya 
                     </label>
                 </div>
                 </div>
@@ -210,7 +199,6 @@ export default function LoginPage() {
                 </div>
                 )}
 
-                {/* Tombol Login */}
                 <div>
                 <button
                     type="submit"
@@ -222,7 +210,6 @@ export default function LoginPage() {
                 </button>
                 </div>
 
-                {/* Terms of Service */}
                 <p className="mt-10 text-center text-xs text-gray-400">
                 Dengan masuk ke SkyTopia, Anda setuju dengan{' '}
                 <Link href="#" className="font-medium underline">

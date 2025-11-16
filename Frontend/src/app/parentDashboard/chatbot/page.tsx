@@ -1,13 +1,10 @@
 'use client';
 
-// (1) Import semua yang kita butuhin
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-// import { useRouter } from 'next/navigation'; // <-- (1. DIHAPUS) 'router' nggak dipake
 import { FiArrowLeft, FiSend, FiPlus, FiTrash2, FiLoader } from 'react-icons/fi';
 import Image from 'next/image'; 
 
-// (2) Tipe data (sesuai model & controller lo)
 interface Session {
     _id: string;
     thread_id: string;
@@ -21,7 +18,6 @@ interface Message {
     timestamp?: string;
     }
 
-    // (2. DIGUNAKAN) Interface ini sekarang dipake di 'fetchChatHistory'
     interface ChatHistory {
     _id: string;
     thread_id: string;
@@ -30,34 +26,21 @@ interface Message {
     messages: Message[];
     }
 
-    // =======================================================================
-    // Komponen Halaman Utama
-    // =======================================================================
     export default function ChatbotPage() {
-    // const router = useRouter(); // <-- (1. DIHAPUS) 'router' nggak dipake
 
-    // State buat nampilin daftar obrolan di kiri
     const [sessions, setSessions] = useState<Session[]>([]);
-    // State buat nampilin isi obrolan di kanan
     const [messages, setMessages] = useState<Message[]>([]);
-    // State buat nampung chat yang lagi aktif
     const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
     
-    // State buat nampung ketikan user
     const [newMessage, setNewMessage] = useState('');
     
-    // State Loading
-    const [isLoadingHistory, setIsLoadingHistory] = useState(false); // Loading history
-    const [isLoadingSessions, setIsLoadingSessions] = useState(true); // Loading daftar sesi
-    const [isSending, setIsSending] = useState(false); // Nunggu balasan AI
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false); 
+    const [isLoadingSessions, setIsLoadingSessions] = useState(true); 
+    const [isSending, setIsSending] = useState(false); 
     const [error, setError] = useState('');
 
-    // Ref buat auto-scroll
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // --- (3) Fungsi-fungsi API ---
-
-    // Fungsi buat ngambil daftar sesi di kiri
     const fetchSessions = async () => {
         setIsLoadingSessions(true);
         try {
@@ -67,7 +50,6 @@ interface Message {
         const response = await fetch('http://localhost:3000/api/chatbot/sessions', {
             headers: { 'Authorization': `Bearer ${token}` },
         });
-        // (DIBENERIN) 'let' jadi 'const'
         const data = await response.json();
         
         if (data.success) {
@@ -82,7 +64,6 @@ interface Message {
         }
     };
 
-    // Fungsi buat ngambil isi chat kalo sesinya diklik
     const fetchChatHistory = async (threadId: string) => {
         setActiveThreadId(threadId);
         setIsLoadingHistory(true);
@@ -95,7 +76,6 @@ interface Message {
             headers: { 'Authorization': `Bearer ${token}` },
         });
         
-        // (DIBENERIN) 'let' jadi 'const' dan 'data.data' dikasih tipe 'ChatHistory'
         const data: { success: boolean, data: ChatHistory, message?: string } = await response.json();
         
         if (data.success) {
@@ -110,14 +90,12 @@ interface Message {
         }
     };
 
-    // Fungsi buat nge-handle "Mulai Obrolan Baru"
     const handleNewChat = () => {
         setActiveThreadId(null);
         setMessages([]);
         setError('');
     };
 
-    // Fungsi buat nge-handle kirim pesan
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
@@ -134,10 +112,8 @@ interface Message {
         if (!token) throw new Error('Token tidak ditemukan');
         
         let response;
-        // let data; // <-- Dihapus dari sini
         
         if (activeThreadId) {
-            // --- (A) Kalo chatnya udah ada ---
             response = await fetch(`http://localhost:3000/api/chatbot/${activeThreadId}/message`, {
             method: 'POST',
             headers: {
@@ -147,7 +123,6 @@ interface Message {
             body: JSON.stringify({ message: userMessageContent }),
             });
         } else {
-            // --- (B) Kalo ini chat baru ---
             response = await fetch('http://localhost:3000/api/chatbot/new', {
             method: 'POST',
             headers: {
@@ -158,7 +133,6 @@ interface Message {
             });
         }
 
-        // (DIBENERIN) 'let data' jadi 'const data' di dalem scope
         const data = await response.json();
 
         if (data.success) {
@@ -181,8 +155,6 @@ interface Message {
         }
     };
 
-    // ... (sisa kode 'handleDeleteSession', 'useEffect', dan JSX SAMA PERSIS) ...
-    // Fungsi Hapus Sesi
     const handleDeleteSession = async (e: React.MouseEvent, threadId: string) => {
         e.stopPropagation();
         if (!confirm('Yakin mau hapus sesi obrolan ini?')) return;
@@ -205,7 +177,6 @@ interface Message {
         }
     };
 
-    // Auto-scroll ke pesan terbaru
     useEffect(() => {
         chatContainerRef.current?.scrollTo({
         top: chatContainerRef.current.scrollHeight,
@@ -213,15 +184,10 @@ interface Message {
         });
     }, [messages]);
 
-    // Load daftar sesi pas halaman dibuka
     useEffect(() => {
         fetchSessions();
-    }, []); // <-- 'fetchSessions' nggak perlu jadi dependency kalo udah pake 'useCallback', tapi di sini kita biarin
+    }, []); 
 
-
-    // =======================================================================
-    // (11) JSX / Tampilan (SAMA PERSIS)
-    // =======================================================================
     return (
         <div className="space-y-6 flex flex-col h-full"> 
         <Link
@@ -238,7 +204,6 @@ interface Message {
         
         <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
             
-            {/* --- Kolom Kiri: Daftar Sesi --- */}
             <div className="w-full lg:w-1/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-200">
                 <button 
@@ -283,12 +248,8 @@ interface Message {
             </div>
             </div>
 
-            {/* --- Kolom Kanan: Ruang Chat --- */}
             <div className="w-full lg:w-2/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Ruang Pesan (Bisa scroll) */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-                
-                {/* Pesan Selamat Datang */}
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">                
                 {messages.length === 0 && !isLoadingHistory && (
                 <div className="flex justify-center items-center h-full">
                     <div className="text-center text-gray-400">
@@ -304,15 +265,14 @@ interface Message {
                 </div>
                 )}
 
-                {/* Nampilin Pesan */}
                 {messages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div 
                     className={`
                         max-w-lg rounded-xl py-2 px-4 shadow-sm
                         ${msg.role === 'user' 
-                        ? 'bg-stat-blue-bg/70 text-brand-purple' // Pesan Lo (Biru)
-                        : 'bg-stat-pink-bg text-brand-purple' // Pesan AI (Pink)
+                        ? 'bg-stat-blue-bg/70 text-brand-purple' 
+                        : 'bg-stat-pink-bg text-brand-purple' 
                         }
                     `}
                     >
@@ -321,7 +281,6 @@ interface Message {
                 </div>
                 ))}
                 
-                {/* Tanda "Lagi Ngetik" */}
                 {isSending && (
                 <div className="flex justify-start">
                     <div className="rounded-xl py-2 px-4 shadow-sm bg-stat-pink-bg text-brand-purple">
@@ -331,7 +290,6 @@ interface Message {
                 )}
             </div>
 
-            {/* Input Chat */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <form onSubmit={handleSubmit} className="flex space-x-3">
                 <input

@@ -89,17 +89,11 @@ export default function BillingPage() {
             if (data.success) {
                 alert('Bukti pembayaran berhasil diunggah!');
                 
-                // --- INI DIA PERBAIKANNYA ---
-                // 'data.payment' adalah tagihan yg udah di-update (status: "Terkirim")
-                // Kita update 'payments' state secara manual
-                // Ini bikin UI-nya langsung berubah instan
                 setPayments(currentPayments => 
                     currentPayments.map(p => 
-                        // Cari tagihan yg ID-nya sama, ganti dengan data baru
                         p._id === paymentId ? data.payment : p
                     )
                 );
-                // fetchPayments(); // <-- Udah nggak perlu fetch ulang
 
             } else {
                 alert(data.message || 'Gagal mengunggah bukti pembayaran');
