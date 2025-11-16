@@ -14,10 +14,9 @@ import {
     FiAlertTriangle,
     FiArrowLeftCircle,
     FiSettings,
-    FiUser // <-- (1) ICON BARU DITAMBAHIN
+    FiUser 
 } from 'react-icons/fi';
 
-    // --- (2) LINK BARU DITAMBAHIN DI SINI ---
     const navLinks = [
     { name: 'Dashboard', href: '/teacherDashboard', icon: FiHome },
     { name: 'Anak Didik Saya', href: '/teacherDashboard/my-class', icon: FiUser },
@@ -26,10 +25,9 @@ import {
     { name: 'Absensi', href: '/teacherDashboard/attendance', icon: FiCheckSquare },
     { name: 'Jadwal & Kurikulum', href: '/teacherDashboard/schedules', icon: FiCalendar },
     ];
-    // ------------------------------------
 
     const bottomLinks = [
-    { name: 'Minta Inventaris', href: '/teacherDashboard/inventory-request', icon: FiArchive },
+    { name: 'Request Inventaris', href: '/teacherDashboard/inventory-request', icon: FiArchive },
     { name: 'Lapor Fasilitas', href: '/teacherDashboard/facility-report', icon: FiAlertTriangle },
     ];
 
@@ -45,8 +43,6 @@ import {
 
             <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
-                // (4) LOGIC 'isActive' DIPERBAIKI
-                // Biar '/teacherDashboard/my-class' bisa nge-highlight '/teacherDashboard/my-class/[id]'
                 const isActive = pathname === link.href || (link.href !== '/teacherDashboard' && pathname.startsWith(link.href));
                 
                 return (
