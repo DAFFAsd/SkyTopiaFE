@@ -2,45 +2,46 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FiArrowLeft, FiSend, FiPlus, FiTrash2, FiLoader } from 'react-icons/fi';
+// (1. BARU) Import ReactMarkdown
+import ReactMarkdown from 'react-markdown';
+// (2. BARU) Import Ikon Chatbot
+import { FiArrowLeft, FiSend, FiPlus, FiTrash2, FiLoader, FiMessageSquare } from 'react-icons/fi';
 import Image from 'next/image'; 
 
+// --- (Interface SAMA) ---
 interface Session {
     _id: string;
     thread_id: string;
     title?: string;
     updated_at: string;
 }
-
 interface Message {
     role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp?: string;
-    }
-
-    interface ChatHistory {
+}
+interface ChatHistory {
     _id: string;
     thread_id: string;
     user_id: string;
     title?: string;
     messages: Message[];
-    }
+}
+// --------------------------
 
-    export default function ChatbotPage() {
-
+export default function ChatbotPage() {
+    // --- (Semua state SAMA) ---
     const [sessions, setSessions] = useState<Session[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-    
     const [newMessage, setNewMessage] = useState('');
-    
     const [isLoadingHistory, setIsLoadingHistory] = useState(false); 
     const [isLoadingSessions, setIsLoadingSessions] = useState(true); 
     const [isSending, setIsSending] = useState(false); 
     const [error, setError] = useState('');
-
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
+    // --- (Semua fungsi SAMA: fetchSessions, fetchChatHistory, handleNewChat, handleSubmit, handleDeleteSession, useEffects) ---
     const fetchSessions = async () => {
         setIsLoadingSessions(true);
         try {
@@ -63,7 +64,6 @@ interface Message {
         setIsLoadingSessions(false);
         }
     };
-
     const fetchChatHistory = async (threadId: string) => {
         setActiveThreadId(threadId);
         setIsLoadingHistory(true);
@@ -89,13 +89,11 @@ interface Message {
         setIsLoadingHistory(false);
         }
     };
-
     const handleNewChat = () => {
         setActiveThreadId(null);
         setMessages([]);
         setError('');
     };
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
@@ -154,7 +152,6 @@ interface Message {
         setIsSending(false);
         }
     };
-
     const handleDeleteSession = async (e: React.MouseEvent, threadId: string) => {
         e.stopPropagation();
         if (!confirm('Yakin mau hapus sesi obrolan ini?')) return;
@@ -176,14 +173,12 @@ interface Message {
         if (err instanceof Error) alert(err.message);
         }
     };
-
     useEffect(() => {
         chatContainerRef.current?.scrollTo({
         top: chatContainerRef.current.scrollHeight,
         behavior: 'smooth'
         });
     }, [messages]);
-
     useEffect(() => {
         fetchSessions();
     }, []); 
@@ -198,12 +193,17 @@ interface Message {
             <span>Kembali ke Dasbor</span>
         </Link>
 
-        <h1 className="text-3xl font-bold text-brand-purple">
-            Chatbot SkyTopia
-        </h1>
+        {/* --- (BARU) Ganti Judul pake Ikon --- */}
+        <div className="flex items-center space-x-3">
+            <FiMessageSquare className="h-8 w-8 text-brand-purple" />
+            <h1 className="font-rammetto text-3xl font-bold text-brand-purple">
+                Tanya SkyBot
+            </h1>
+        </div>
         
         <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
             
+            {/* --- Kolom Kiri: Daftar Sesi (SAMA) --- */}
             <div className="w-full lg:w-1/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-200">
                 <button 
@@ -248,12 +248,15 @@ interface Message {
             </div>
             </div>
 
+            {/* --- Kolom Kanan: Ruang Chat --- */}
             <div className="w-full lg:w-2/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">                
+            {/* Ruang Pesan (Bisa scroll) */}
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+                
                 {messages.length === 0 && !isLoadingHistory && (
                 <div className="flex justify-center items-center h-full">
                     <div className="text-center text-gray-400">
-                    <Image src="/skytopia-logo.svg" alt="Logo" width={150} height={40} className="mx-auto" />
+                    <Image src="/skytopia-logo.svg" alt="Logo" width={150} height={40} className="mx-auto opacity-50" />
                     <p className="mt-4">Mulai obrolan baru atau pilih sesi di samping.</p>
                     </div>
                 </div>
@@ -265,6 +268,8 @@ interface Message {
                 </div>
                 )}
 
+                {/* --- (3. DIBENERIN) --- */}
+                {/* Nampilin Pesan Pake ReactMarkdown */}
                 {messages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div 
@@ -276,7 +281,14 @@ interface Message {
                         }
                     `}
                     >
-                    {msg.content}
+                        {/* --- INI DIA PERBAIKANNYA --- */}
+                        {/* Kita pake 'prose' dari Tailwind biar styling-nya (list, bold) otomatis */}
+                        <div className="prose prose-sm max-w-none">
+                            <ReactMarkdown>
+                                {msg.content}
+                            </ReactMarkdown>
+                        </div>
+                        {/* ---------------------------- */}
                     </div>
                 </div>
                 ))}
@@ -290,6 +302,7 @@ interface Message {
                 )}
             </div>
 
+            {/* Input Chat (SAMA) */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <form onSubmit={handleSubmit} className="flex space-x-3">
                 <input
@@ -304,7 +317,7 @@ interface Message {
                     type="submit"
                     disabled={isSending || !newMessage.trim()}
                     className="flex-shrink-0 flex items-center justify-center rounded-lg bg-login-pink py-2 px-4 text-sm font-semibold text-white shadow-sm hover:bg-opacity-90
-                            disabled:cursor-not-allowed disabled:bg-pink-300"
+                                disabled:cursor-not-allowed disabled:bg-pink-300"
                 >
                     {isSending ? (
                     <FiLoader className="h-5 w-5 animate-spin" />
