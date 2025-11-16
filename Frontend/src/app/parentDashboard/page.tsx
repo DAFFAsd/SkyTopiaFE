@@ -121,7 +121,7 @@ export default function ParentDashboardPage() {
         <div className="space-y-8">
             <div className="relative rounded-xl shadow-sm border border-yellow-200 bg-welcome-yellow p-8 overflow-hidden">
                 <div className="max-w-md">
-                    <h3 className="font-rammetto text-3xl font-bold text-brand-purple">
+                    <h3 className="font-semibold text-3xl text-brand-purple">
                         Halo, {user?.name || 'Orang Tua'}!
                     </h3>
                     <p className="mt-2 text-brand-purple/90">
