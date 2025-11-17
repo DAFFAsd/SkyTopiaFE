@@ -1,8 +1,6 @@
 // app/apple-icon.tsx
-// Apple Touch Icon for iOS devices (when saving to home screen)
 import { ImageResponse } from 'next/og';
 
-// Apple icon size - standard 180x180
 export const size = {
   width: 180,
   height: 180,
@@ -10,7 +8,6 @@ export const size = {
 
 export const contentType = 'image/png';
 
-// Generate the apple touch icon
 export default function AppleIcon() {
   return new ImageResponse(
     (

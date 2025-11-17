@@ -7,7 +7,6 @@ import {
     FiSunrise, FiMoon, FiFileText, FiHeart, FiActivity, FiUser, FiCoffee, FiCalendar
 } from 'react-icons/fi';
 
-// --- (1) TIPE DATA SESUAI BACKEND ---
 interface Child {
     _id: string;
     name: string;
@@ -21,15 +20,15 @@ interface Teacher {
 
 interface DailyReport {
     _id: string;
-    child_id: Child; // Di-populate sama backend
-    teacher_id: Teacher; // Di-populate sama backend
+    child_id: Child; 
+    teacher_id: Teacher; 
     date: string;
     theme: string;
     sub_theme: string;
     physical_motor: string;
     cognitive: string;
     social_emotional: string;
-    meals: { // <-- Perhatiin, 'meals' itu object
+    meals: { 
         snack: string;
         lunch: string;
     };
@@ -38,7 +37,6 @@ interface DailyReport {
     createdAt: string;
 }
 
-// Tipe data buat nampung state form
 interface ReportFormData {
     child_id: string;
     date: string;
@@ -54,9 +52,7 @@ interface ReportFormData {
     nap_duration: string;
     special_notes: string;
 }
-// ------------------------------------
 
-// --- (BARU) STATE AWAL BUAT NGERESET FORM ---
 const initialReportData: Omit<ReportFormData, 'child_id' | 'date'> = {
     theme: '',
     sub_theme: '',
@@ -67,14 +63,11 @@ const initialReportData: Omit<ReportFormData, 'child_id' | 'date'> = {
     nap_duration: '',
     special_notes: ''
 };
-// -------------------------------------------
 
 export default function DailyReportPage() {
-    // State buat nampung data dari API
-    const [children, setChildren] = useState<Child[]>([]); // Buat dropdown <select>
-    const [myReports, setMyReports] = useState<DailyReport[]>([]); // Buat daftar di bawah
+    const [children, setChildren] = useState<Child[]>([]); 
+    const [myReports, setMyReports] = useState<DailyReport[]>([]); 
     
-    // State buat nampung isi form
     const [formData, setFormData] = useState<ReportFormData>({
         child_id: '',
         date: new Date().toISOString().split('T')[0],
@@ -86,15 +79,9 @@ export default function DailyReportPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    // --- (2) FUNGSI FETCH DATA (UDAH DIBENERIN) ---
-
-    // Ambil daftar anak (buat di <select>)
     const fetchChildren = useCallback(async (token: string) => {
         setIsLoadingChildren(true);
         try {
-            // PENTING: Endpoint 'GET /api/children' harus bisa diakses Teacher
-            // Kalo ini error 'Access Denied', bilang temen lo buat ganti
-            // 'requireAdmin' jadi 'requireAdminOrTeacher' di 'child.route.js'
             const response = await fetch('http://localhost:3000/api/children', {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -116,11 +103,9 @@ export default function DailyReportPage() {
         }
     }, []);
 
-    // Ambil daftar laporan yang udah dibuat sama Teacher ini
     const fetchMyReports = useCallback(async (token: string) => {
         setIsLoadingReports(true);
         try {
-            // Pake endpoint Teacher: /my-reports
             const response = await fetch('http://localhost:3000/api/daily-reports/my-reports', {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -150,9 +135,6 @@ export default function DailyReportPage() {
         fetchMyReports(token);
     }, [fetchChildren, fetchMyReports]);
 
-    
-    // --- (3) FUNGSI FORM (UDAH DIBENERIN) ---
-
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         
@@ -181,27 +163,24 @@ export default function DailyReportPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            // Pake endpoint Teacher: POST /
             const response = await fetch('http://localhost:3000/api/daily-reports', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData) // Kirim semua state 'formData'
+                body: JSON.stringify(formData) 
             });
 
             const data = await response.json();
 
             if (data.success) {
                 setMessage({ type: 'success', text: 'Laporan harian berhasil dibuat!' });
-                // Reset form
                 setFormData(prev => ({
                     ...initialReportData, 
                     child_id: prev.child_id, 
                     date: prev.date, 
                 }));
-                // Refresh daftar laporan di bawah
                 fetchMyReports(token); 
             } else {
                 throw new Error(data.message || 'Terjadi kesalahan');
@@ -215,7 +194,6 @@ export default function DailyReportPage() {
         }
     };
 
-    // --- (4) FUNGSI DELETE (BARU) ---
     const handleDelete = async (reportId: string) => {
         if (!confirm('Yakin mau hapus laporan ini?')) return;
 
@@ -231,7 +209,6 @@ export default function DailyReportPage() {
 
             if (data.success) {
                 alert('Laporan berhasil dihapus');
-                // Hapus dari state 'myReports'
                 setMyReports(prev => prev.filter(r => r._id !== reportId));
             } else {
                 throw new Error(data.message || 'Gagal menghapus laporan');
@@ -243,7 +220,6 @@ export default function DailyReportPage() {
         }
     };
     
-    // --- (5) JSX / TAMPILAN (UDAH DIBIKIN "LUCU") ---
     return (
         <div className="space-y-6">
             <Link href="/teacherDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline">
@@ -252,11 +228,8 @@ export default function DailyReportPage() {
             </Link>
             <h1 className="font-rammetto text-3xl font-bold text-brand-purple">Buat Laporan Harian</h1>
 
-            {/* --- Form Utama --- */}
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    
-                    {/* Baris 1: Pilih Anak & Tanggal */}
+                <form onSubmit={handleSubmit} className="space-y-6">                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="child_id" className="block text-sm font-semibold text-brand-purple mb-2">
@@ -298,7 +271,6 @@ export default function DailyReportPage() {
                         </div>
                     </div>
 
-                    {/* Baris 2: Tema & Sub-Tema */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="theme" className="block text-sm font-semibold text-brand-purple mb-2">
@@ -332,7 +304,6 @@ export default function DailyReportPage() {
                         </div>
                     </div>
 
-                    {/* Baris 3: Aktivitas (Motorik, Kognitif, Sosem) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label htmlFor="physical_motor" className="block text-sm font-semibold text-brand-purple mb-2">
@@ -381,7 +352,6 @@ export default function DailyReportPage() {
                         </div>
                     </div>
                     
-                    {/* Baris 4: Makanan (Snack & Lunch) & Tidur Siang */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label htmlFor="snack" className="block text-sm font-semibold text-brand-purple mb-2">
@@ -430,7 +400,6 @@ export default function DailyReportPage() {
                         </div>
                     </div>
                     
-                    {/* Baris 5: Catatan Khusus */}
                     <div>
                         <label htmlFor="special_notes" className="block text-sm font-semibold text-brand-purple mb-2">
                             <FiFileText className="h-4 w-4 inline mr-1" />
@@ -447,14 +416,12 @@ export default function DailyReportPage() {
                         />
                     </div>
 
-                    {/* Notifikasi Error/Success */}
                     {message.text && (
                         <div className={`rounded-md p-4 text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                             {message.text}
                         </div>
                     )}
 
-                    {/* Tombol Submit */}
                     <button
                         type="submit"
                         disabled={isSubmitting || isLoadingChildren}
@@ -473,7 +440,6 @@ export default function DailyReportPage() {
                 </form>
             </div>
 
-            {/* --- (6) DAFTAR LAPORAN TERBARU (READ & DELETE) --- */}
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
                 <h2 className="mb-4 text-xl font-bold text-brand-purple">
                     <FiList className="h-5 w-5 inline mr-2" />

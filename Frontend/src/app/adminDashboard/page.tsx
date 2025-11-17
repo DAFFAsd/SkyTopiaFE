@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { FiUsers, FiDatabase, FiCalendar, FiClipboard, FiBarChart } from 'react-icons/fi';
 
@@ -27,7 +26,7 @@ export default function DashboardAdminPage() {
 	return (
 		<div className="space-y-8">
 			<div className="relative rounded-lg bg-welcome-yellow p-8">
-				<h1 className="text-4xl font-bold text-brand-purple mb-2">Halo, Admin!</h1>
+				<h1 className="text-xl font-bold text-brand-purple mb-2">Halo, Admin!</h1>
 				<p className="text-gray-600 text-lg">
 					Selamat datang di dasbor admin. Silakan pilih tugas yang ingin Anda lakukan.
 				</p>

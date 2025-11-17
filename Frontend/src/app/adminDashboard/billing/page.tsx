@@ -1,19 +1,19 @@
 'use client';
 
-// --- (1. BARU) Import 'useCallback' dan 'useRef' ---
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FiArrowLeft } from 'react-icons/fi';
 import { 
     FiArrowLeft, FiClock, FiCheckCircle, FiAlertCircle, 
-    FiXCircle, FiEye, FiCheck, FiX, FiList 
+    FiXCircle, FiEye, FiCheck, FiX, FiSend, 
 } from 'react-icons/fi';
 
-// --- (Interface SAMA) ---
 interface Child {
     _id: string;
     name: string;
+    monthly_fee: number; 
+    semester_fee: number; 
 }
 interface Payment {
     _id: string;
@@ -28,10 +28,239 @@ interface Payment {
     rejection_reason?: string;
 }
 
+function calculateFee(children: Child[], childId: string, category: 'Bulanan' | 'Semester' | 'Registrasi'): number {
+    const child = children.find(c => c._id === childId);
+    if (!child) return 0;
+    
+    switch (category) {
+        case 'Bulanan':
+            return child.monthly_fee || 0;
+        case 'Semester':
+            return child.semester_fee || 0;
+        case 'Registrasi':
+            return 0; 
+        default:
+            return 0;
+    }
+}
+
+interface CreateFormProps {
+    childList: Child[];
+    isLoadingChildren: boolean;
+    onSuccess: () => void;
+}
+
+function CreatePaymentForm({ childList, isLoadingChildren, onSuccess }: CreateFormProps) {
+    const [formData, setFormData] = useState({
+        child_id: '',
+        category: 'Bulanan',
+        period: '',
+        amount: 0,
+        due_date: new Date().toISOString().split('T')[0],
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
+
+    const selectedChild = childList.find(c => c._id === formData.child_id);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+    
+    useEffect(() => {
+        let newAmount = 0;
+        let newPeriod = '';
+
+        if (formData.child_id && formData.category) {
+            newAmount = calculateFee(childList, formData.child_id, formData.category as 'Bulanan' | 'Semester' | 'Registrasi');
+            
+            if (formData.category === 'Bulanan') {
+                newPeriod = new Date().toISOString().substring(0, 7).replace('-', '-'); 
+            } else if (formData.category === 'Semester') {
+                const currentYear = new Date().getFullYear();
+                newPeriod = formData.category === 'Semester' && new Date().getMonth() + 1 > 6 ? `${currentYear}-2` : `${currentYear}-1`;
+            }
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            amount: newAmount || prev.amount, 
+            period: newPeriod || prev.period,
+        }));
+
+    }, [formData.child_id, formData.category, childList]);
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setMessage({ type: '', text: '' });
+
+        if (!formData.child_id || (formData.category !== 'Registrasi' && !formData.period) || formData.amount <= 0) {
+            setMessage({ type: 'error', text: 'Pastikan Anak, Jumlah, dan Periode/Kategori sudah terisi dengan benar.' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Token tidak ditemukan');
+
+            const response = await fetch('http://localhost:3000/api/payments', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setMessage({ type: 'success', text: `Tagihan berhasil dibuat untuk ${selectedChild?.name}.` });
+                onSuccess(); 
+                setFormData(prev => ({
+                    ...prev,
+                    category: 'Bulanan',
+                    amount: calculateFee(childList, prev.child_id, 'Bulanan'),
+                    period: new Date().toISOString().substring(0, 7).replace('-', '-'),
+                }));
+            } else {
+                throw new Error(data.message || 'Gagal membuat tagihan.');
+            }
+
+        } catch (err: unknown) {
+            let errorMessage = "Terjadi kesalahan";
+            if (err instanceof Error) errorMessage = err.message;
+            setMessage({ type: 'error', text: errorMessage });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    const daysRemaining = selectedChild ? Math.ceil((new Date(formData.due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    return (
+        <div className="rounded-xl bg-white p-6 shadow-xl border border-login-pink/50">
+            <h2 className="text-xl font-bold text-brand-purple mb-4">
+                Buat Tagihan Baru
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {/* 1. Pilih Anak */}
+                <div>
+                    <label htmlFor="child_id" className="block text-sm font-medium text-gray-700">Anak Didik</label>
+                    <select
+                        id="child_id"
+                        name="child_id"
+                        value={formData.child_id}
+                        onChange={handleChange}
+                        disabled={isLoadingChildren || isSubmitting}
+                        className="w-full rounded-lg border-brand-purple/30 shadow-sm focus:border-login-pink focus:ring-1 focus:ring-login-pink transition-colors"
+                        required
+                    >
+                        <option value="" disabled>{isLoadingChildren ? "Memuat..." : "Pilih Anak"}</option>
+                        {childList.map((child) => (
+                            <option key={child._id} value={child._id}>
+                                {child.name} (Rp{child.monthly_fee.toLocaleString('id-ID')})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* 2. Kategori Tagihan */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700">Kategori</label>
+                        <select
+                            id="category"
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="w-full rounded-lg border-brand-purple/30 shadow-sm focus:border-login-pink focus:ring-1 focus:ring-login-pink transition-colors"
+                        >
+                            <option value="Bulanan">Bulanan</option>
+                            <option value="Semester">Semester</option>
+                            <option value="Registrasi">Registrasi (Manual)</option>
+                        </select>
+                    </div>
+                    {/* 3. Periode */}
+                    {formData.category !== 'Registrasi' && (
+                        <div>
+                            <label htmlFor="period" className="block text-sm font-medium text-gray-700">Periode</label>
+                            <input
+                                type="text"
+                                id="period"
+                                name="period"
+                                value={formData.period}
+                                onChange={handleChange}
+                                placeholder={formData.category === 'Bulanan' ? 'YYYY-MM' : 'YYYY-1'}
+                                className="w-full rounded-lg border-brand-purple/30 shadow-sm focus:border-login-pink focus:ring-1 focus:ring-login-pink transition-colors"
+                                required
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* 4. Jumlah & Jatuh Tempo */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
+                        <input
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            value={formData.amount}
+                            onChange={handleChange}
+                            disabled={formData.category !== 'Registrasi'} 
+                            className={`w-full rounded-lg border-brand-purple/30 shadow-sm focus:border-login-pink focus:ring-1 focus:ring-login-pink transition-colors ${formData.category !== 'Registrasi' ? 'bg-gray-100' : ''}`}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">Jatuh Tempo</label>
+                        <input
+                            type="date"
+                            id="due_date"
+                            name="due_date"
+                            value={formData.due_date}
+                            onChange={handleChange}
+                            className="w-full rounded-lg border-brand-purple/30 shadow-sm focus:border-login-pink focus:ring-1 focus:ring-login-pink transition-colors"
+                            required
+                        />
+                        {daysRemaining !== null && (
+                            <p className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                                {daysRemaining < 0 ? `Terlambat ${Math.abs(daysRemaining)} hari` : `Tersisa ${daysRemaining} hari`}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Notifikasi & Tombol Submit */}
+                {message.text && (
+                    <div className={`rounded-md p-3 text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                        {message.text}
+                    </div>
+                )}
+                <button
+                    type="submit"
+                    disabled={isSubmitting || !formData.child_id}
+                    className="w-full flex items-center justify-center rounded-lg bg-login-pink py-2 px-4 text-sm font-semibold text-white shadow-md hover:bg-opacity-90 disabled:bg-pink-300"
+                >
+                    <FiSend className="h-4 w-4 mr-2" />
+                    {isSubmitting ? 'Memproses...' : 'Buat Tagihan'}
+                </button>
+            </form>
+        </div>
+    );
+}
+
 export default function AdminBillingPage() {
-    // --- (State 'allPayments' dan 'filteredPayments') ---
     const [allPayments, setAllPayments] = useState<Payment[]>([]); 
     const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]); 
+    const [children, setChildren] = useState<Child[]>([]); 
     
     const [isLoading, setIsLoading] = useState(true);
     const [isFiltering, setIsFiltering] = useState(false);
@@ -47,104 +276,94 @@ export default function AdminBillingPage() {
     const paymentsListRef = useRef<HTMLDivElement>(null);
     const isInitialLoad = useRef(true);
 
-    // --- (2. DIUBAH) Bungkus fetchPayments pake useCallback ---
-    // 'useCallback' "ngunci" fungsi ini biar nggak dibuat ulang setiap render
-    const fetchPayments = useCallback(async () => {
-        // Hapus setIsFiltering(true) dari sini biar nggak ngedip pas load
+    const fetchPaymentsAndChildren = useCallback(async () => {
         setError('');
         try {
             const token = localStorage.getItem('token');
-            if (!token) {
-                setError('Token Admin tidak ditemukan. Silakan login kembali.');
-                return;
-            }
-            
-            const response = await fetch(`http://localhost:3000/api/payments?limit=500`, { 
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+            if (!token) throw new Error('Token Admin tidak ditemukan.');
 
-            const data = await response.json();
-            if (data.success) {
-                setAllPayments(data.payments); // Simpen di state 'allPayments'
+            const childrenRes = await fetch('http://localhost:3000/api/children', { headers: { 'Authorization': `Bearer ${token}` } });
+            const childrenData = await childrenRes.json();
+            if (childrenData.success) {
+                const transformedChildren: Child[] = childrenData.children.map((c: Record<string, unknown>) => ({
+                    _id: c._id,
+                    name: c.name,
+                    monthly_fee: c.monthly_fee || 0,
+                    semester_fee: c.semester_fee || 0,
+                }));
+                setChildren(transformedChildren);
             } else {
-                setError(data.message || 'Gagal mengambil data pembayaran');
+                throw new Error(childrenData.message || 'Gagal mengambil data anak');
             }
-        } catch (error) {
-            console.error('Error fetching payments:', error);
-            setError('Terjadi kesalahan saat mengambil data pembayaran');
+
+            const paymentsRes = await fetch(`http://localhost:3000/api/payments?limit=500`, { 
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            const paymentsData = await paymentsRes.json();
+            if (paymentsData.success) {
+                setAllPayments(paymentsData.payments); 
+            } else {
+                throw new Error(paymentsData.message || 'Gagal mengambil data pembayaran');
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error) setError(err.message);
         } finally {
             setIsLoading(false); 
         }
-    // 'useCallback' ini nggak bergantung sama state apa-apa, jadi dependency-nya []
     }, []); 
 
-    // --- (3. DIUBAH) 'useEffect' ini sekarang aman ---
-    // Ini buat nge-fetch data SEKALI AJA pas halaman dibuka
     useEffect(() => {
-        fetchPayments();
-    }, [fetchPayments]); // <-- 'fetchPayments' sekarang aman dijadiin dependency
-
-
-    // --- (4. BARU) 'useEffect' ini jalan tiap kali filter ATAU data utama berubah ---
-    useEffect(() => {
-        // Jangan jalanin ini pas pertama kali load
-        if (isInitialLoad.current) {
-            isInitialLoad.current = false; // Tandain kalo udah nggak load awal
-            // Khusus load awal, kita set filter 'Terkirim'
-            setFilteredPayments(allPayments.filter(p => p.status === 'Terkirim'));
+        if (allPayments.length === 0 && isInitialLoad.current) {
             return; 
         }
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            setFilteredPayments(allPayments.filter(p => p.status === 'Terkirim'));
+            return;
+        }
 
-        setIsFiltering(true); // Mulai filtering
+        setIsFiltering(true);
         
         setTimeout(() => {
+            let filtered: Payment[] = [];
             if (filterStatus === 'Semua') {
-                setFilteredPayments(allPayments);
+                filtered = allPayments;
             } else if (filterStatus === 'Menunggu') {
-                const filtered = allPayments.filter(p => p.status === 'Tertunda' || p.status === 'Terkirim');
-                setFilteredPayments(filtered);
+                filtered = allPayments.filter(p => p.status === 'Tertunda' || p.status === 'Terkirim');
             } else if (filterStatus === 'Terlambat') {
-                const filtered = allPayments.filter(p => p.status === 'Jatuh Tempo' || p.status === 'Ditolak');
-                setFilteredPayments(filtered);
+                filtered = allPayments.filter(p => p.status === 'Jatuh Tempo' || p.status === 'Ditolak');
             } else {
-                const filtered = allPayments.filter(p => p.status === filterStatus);
-                setFilteredPayments(filtered);
+                filtered = allPayments.filter(p => p.status === filterStatus);
             }
-            setIsFiltering(false); // Selesai filtering
+            setFilteredPayments(filtered);
+            setIsFiltering(false);
         }, 300);
         
-    }, [filterStatus, allPayments]); // <-- Kuncinya di sini
+    }, [filterStatus, allPayments]); 
 
+    useEffect(() => {
+        fetchPaymentsAndChildren();
+    }, [fetchPaymentsAndChildren]); 
 
-    // --- (handleUpdateStatus & helper functions SAMA PERSIS) ---
     const handleUpdateStatus = async (paymentId: string, status: 'Dibayar' | 'Ditolak', reason: string = '') => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Token Admin tidak ditemukan.'); return;
-            }
+            if (!token) { alert('Token hilang.'); return; }
+            
             const body: { status: string, rejection_reason?: string } = { status };
-            if (status === 'Ditolak' && reason) {
-                body.rejection_reason = reason;
-            }
+            if (status === 'Ditolak' && reason) { body.rejection_reason = reason; }
+
             const response = await fetch(`http://localhost:3000/api/payments/${paymentId}/status`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
             const data = await response.json();
             if (data.success) {
                 alert(`Pembayaran berhasil di-${status.toLowerCase()}!`);
                 setAllPayments(currentPayments => 
-                    currentPayments.map(p => 
-                        p._id === paymentId ? data.payment : p
-                    )
+                    currentPayments.map(p => p._id === paymentId ? data.payment : p)
                 );
                 setRejectingPayment(null);
                 setRejectionReason('');
@@ -158,10 +377,16 @@ export default function AdminBillingPage() {
             setIsSubmitting(false);
         }
     };
+
+    const handleCreateSuccess = () => {
+        fetchPaymentsAndChildren();
+        setFilterStatus('Semua'); 
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Dibayar': return 'bg-green-100 text-green-800';
-            case 'Terkirim': return 'bg-yellow-100 text-yellow-800';
+            case 'Terkirim': return 'bg-blue-100 text-blue-800'; 
             case 'Ditolak': return 'bg-red-100 text-red-800';
             case 'Jatuh Tempo': return 'bg-red-100 text-red-800';
             default: return 'bg-yellow-100 text-yellow-800';
@@ -170,7 +395,7 @@ export default function AdminBillingPage() {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'Dibayar': return <FiCheckCircle className="h-5 w-5 text-green-500" />;
-            case 'Terkirim': return <FiClock className="h-5 w-5 text-yellow-500" />;
+            case 'Terkirim': return <FiClock className="h-5 w-5 text-blue-500" />;
             case 'Ditolak': return <FiXCircle className="h-5 w-5 text-red-500" />;
             case 'Jatuh Tempo': return <FiAlertCircle className="h-5 w-5 text-red-500" />;
             default: return <FiClock className="h-5 w-5 text-yellow-500" />;
@@ -183,11 +408,10 @@ export default function AdminBillingPage() {
         return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    // --- (Kalkulasi statistik SAMA) ---
-    const totalPending = allPayments.filter(p => p.status === 'Tertunda' || p.status === 'Terkirim').length;
+    const totalTerkirim = allPayments.filter(p => p.status === 'Terkirim').length;
+    const totalTertunda = allPayments.filter(p => p.status === 'Tertunda').length;
     const totalPaid = allPayments.filter(p => p.status === 'Dibayar').length;
     const totalOverdue = allPayments.filter(p => p.status === 'Jatuh Tempo' || p.status === 'Ditolak').length;
-    const totalAll = allPayments.length;
 
     const handleFilterClick = (status: string) => {
         setFilterStatus(status);
@@ -208,59 +432,89 @@ export default function AdminBillingPage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
 
-            <h1 className="text-3xl font-bold text-brand-purple">
+            <h1 className="font-rammetto text-3xl font-bold text-brand-purple">
                 Manajemen Tagihan
             </h1>
 
             {error && ( <div className="rounded-lg bg-red-50 p-4 text-red-700">{error}</div> )}
+            
+            {children.length > 0 && (
+                <CreatePaymentForm 
+                    childList={children}
+                    isLoadingChildren={isLoading}
+                    onSuccess={handleCreateSuccess}
+                />
+            )}
 
-            {/* --- (Statistics Cards SAMA) --- */}
+            <h1 className="font-rammetto pt-10 text-3xl font-bold text-brand-purple">
+                Statistik Tagihan
+            </h1>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                     type="button"
-                    onClick={() => handleFilterClick('Menunggu')}
+                    onClick={() => handleFilterClick('Terkirim')} 
                     className={`rounded-xl p-6 border-l-4 text-left transition-all hover:scale-105
-                        ${(filterStatus === 'Menunggu' || filterStatus === 'Terkirim' || filterStatus === 'Tertunda')
-                        ? 'bg-yellow-100 border-yellow-500 shadow-lg' 
-                        : 'bg-yellow-50 border-yellow-500'
+                        ${filterStatus === 'Terkirim' 
+                            ? 'bg-blue-100 border-blue-500 shadow-lg' 
+                            : 'bg-blue-50 border-blue-500'
                         }
                     `}
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Menunggu</p>
-                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalPending}</p>
+                            <p className="text-sm font-medium text-gray-600">Butuh Verifikasi</p>
+                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalTerkirim}</p>
                         </div>
-                        <FiClock className="h-8 w-8 text-yellow-500" />
+                        <FiClock className="h-8 w-8 text-blue-500" />
                     </div>
                 </button>
                 
                 <button
                     type="button"
-                    onClick={() => handleFilterClick('Terlambat')}
+                    onClick={() => handleFilterClick('Tertunda')}
                     className={`rounded-xl p-6 border-l-4 text-left transition-all hover:scale-105
-                        ${(filterStatus === 'Terlambat' || filterStatus === 'Jatuh Tempo' || filterStatus === 'Ditolak')
-                        ? 'bg-red-100 border-red-500 shadow-lg' 
-                        : 'bg-red-50 border-red-500'
+                        ${filterStatus === 'Tertunda' 
+                            ? 'bg-yellow-100 border-yellow-500 shadow-lg' 
+                            : 'bg-yellow-50 border-yellow-500'
                         }
                     `}
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Terlambat / Ditolak</p>
-                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalOverdue}</p>
+                            <p className="text-sm font-medium text-gray-600">Tertunda</p>
+                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalTertunda}</p>
                         </div>
-                        <FiAlertCircle className="h-8 w-8 text-red-500" />
+                        <FiClock className="h-8 w-8 text-yellow-500" />
                     </div>
                 </button>
 
                 <button
                     type="button"
+                    onClick={() => handleFilterClick('Terlambat')}
+                    className={`rounded-xl p-6 border-l-4 text-left transition-all hover:scale-105
+                        ${(filterStatus === 'Jatuh Tempo' || filterStatus === 'Ditolak') 
+                            ? 'bg-red-100 border-red-500 shadow-lg' 
+                            : 'bg-red-50 border-red-500'
+                        }
+                    `}
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Jatuh Tempo / Ditolak</p>
+                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalOverdue}</p>
+                        </div>
+                        <FiAlertCircle className="h-8 w-8 text-red-500" />
+                    </div>
+                </button>
+                
+                <button
+                    type="button"
                     onClick={() => handleFilterClick('Dibayar')}
                     className={`rounded-xl p-6 border-l-4 text-left transition-all hover:scale-105
                         ${filterStatus === 'Dibayar' 
-                        ? 'bg-green-100 border-green-500 shadow-lg' 
-                        : 'bg-green-50 border-green-500'
+                            ? 'bg-green-100 border-green-500 shadow-lg' 
+                            : 'bg-green-50 border-green-500'
                         }
                     `}
                 >
@@ -272,29 +526,8 @@ export default function AdminBillingPage() {
                         <FiCheckCircle className="h-8 w-8 text-green-500" />
                     </div>
                 </button>
-                
-                <button
-                    type="button"
-                    onClick={() => handleFilterClick('Semua')}
-                    className={`rounded-xl p-6 border-l-4 text-left transition-all hover:scale-105
-                        ${filterStatus === 'Semua' 
-                        ? 'bg-gray-200 border-gray-500 shadow-lg' 
-                        : 'bg-gray-50 border-gray-500'
-                        }
-                    `}
-                >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Semua Tagihan</p>
-                            <p className="text-2xl font-bold text-brand-purple">{isLoading ? '...' : totalAll}</p>
-                        </div>
-                        <FiList className="h-8 w-8 text-gray-500" />
-                    </div>
-                </button>
             </div>
 
-
-            {/* --- (DAFTAR PEMBAYARAN SAMA) --- */}
             <div ref={paymentsListRef} className="scroll-mt-5">
                 {isLoading ? (
                     <div className="rounded-lg bg-white p-8 shadow-sm text-center">
@@ -306,7 +539,6 @@ export default function AdminBillingPage() {
                         {filteredPayments.length > 0 ? (
                             filteredPayments.map((payment) => (
                                 <div key={payment._id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-                                    {/* ... (Sisa kode dalemnya SAMA PERSIS) ... */}
                                     <div className="flex flex-wrap items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center space-x-3 mb-3">
@@ -354,6 +586,7 @@ export default function AdminBillingPage() {
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Tombol Aksi (Tolak/Setujui) */}
                                         {payment.status === 'Terkirim' && (
                                             <div className="flex-shrink-0 flex space-x-2 mt-4 md:mt-0">
                                                 <button
@@ -389,7 +622,6 @@ export default function AdminBillingPage() {
             </div>
         </div>
 
-        {/* --- (Modal SAMA PERSIS) --- */}
         {viewingProof && (
             <div 
                 className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"
@@ -405,13 +637,15 @@ export default function AdminBillingPage() {
                     >
                         <FiXCircle className="h-8 w-8" />
                     </button>
-                    <Image 
-                        src={viewingProof} 
-                        alt="Bukti Pembayaran" 
-                        width={600} 
-                        height={800} 
-                        className="max-w-lg max-h-[80vh] object-contain" 
-                    />
+                    <div className="w-[600px] h-[800px] overflow-hidden max-w-lg max-h-[80vh] flex items-center justify-center">
+                        <Image 
+                            src={viewingProof} 
+                            alt="Bukti Pembayaran" 
+                            width={600} 
+                            height={800} 
+                            className="object-contain" 
+                        />
+                    </div>
                 </div>
             </div>
         )}

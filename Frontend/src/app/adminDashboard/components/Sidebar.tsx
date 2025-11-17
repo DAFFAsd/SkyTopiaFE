@@ -11,16 +11,18 @@ import {
     FiCalendar,
     FiDollarSign,
     FiArrowLeftCircle,
-    FiFilter,
-    FiAward,
-    FiSettings,
     FiPackage,
     FiBarChart,
+    FiUsers,
+    FiClipboard, 
+    FiFileText, 
 } from 'react-icons/fi';
 
-// Admin sidebar mirrors the dashboard sidebar but with 'Anak' and 'Guru' removed
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
+    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiFileText }, // Menggunakan FiFileText untuk User/Data
+    { name: 'Data Anak', href: '/adminDashboard/children', icon: FiUsers },
+    { name: 'Laporan Harian', href: '/adminDashboard/daily-reports', icon: FiClipboard },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
     { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCalendar },
     { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
@@ -36,53 +38,63 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
 
     return (
-    <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex fixed h-screen">
-        <div className="flex-1">
-            <div className="mb-10 flex items-center justify-center">
+    <aside className="w-64 flex flex-col bg-sidebar-bg border-r border-gray-200  md:flex fixed h-screen px-6 py-6"> 
+        
+        <div className="mb-6 flex items-center justify-center flex-shrink-0">
             <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />
         </div>
 
-        {/* Navigasi Utama */}
-        <nav className="flex flex-col space-y-2">
-            {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                <Link
-                    key={link.name}
-                    href={link.href}
-                    className={`flex items-center space-x-3 rounded-lg p-3 text-sm font-medium
-                        ${
-                        isActive
-                            ? 'bg-active-pink text-active-pink-text'
-                            : 'text-sidebar-text hover:bg-gray-100'
-                        }
+
+        <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden"> 
+
+            <nav className="flex flex-col space-y-2">
+                {navLinks.map((link) => {
+                    const isActive = pathname === link.href || (link.href !== '/adminDashboard' && pathname.startsWith(link.href));
+                    return (
+                    <Link
+                        key={link.name}
+                        href={link.href}
+                        className={`flex items-center space-x-3 rounded-lg p-3 text-sm font-medium
+                            ${
+                            isActive
+                                ? 'bg-active-pink text-active-pink-text'
+                                : 'text-sidebar-text hover:bg-gray-100'
+                            }
                         `}
-                >
-                    <link.icon className="h-5 w-5" />
-                    <span>{link.name}</span>
-                </Link>
-                );
-            })}
+                    >
+                        <link.icon className="h-5 w-5" />
+                        <span>{link.name}</span>
+                    </Link>
+                    );
+                })}
+            </nav>
+
+            <nav className="flex flex-col space-y-2">
+                {bottomLinks.map((link) => {
+                    const isActive = pathname.startsWith(link.href);
+                    return (
+                        <Link
+                            key={link.name}
+                            href={link.href}
+                            className={`flex items-center justify-between rounded-lg p-3 text-sm font-medium
+                                ${
+                                    isActive
+                                    ? 'bg-active-pink text-active-pink-text'
+                                    : 'text-sidebar-text hover:bg-gray-100'
+                                }
+                            `}
+                        >
+                            <div className="flex items-center space-x-3">
+                            <link.icon className="h-5 w-5" />
+                            <span>{link.name}</span>
+                            </div>
+                        </Link>
+                    );
+                })}
             </nav>
         </div>
-
-        {/* Navigasi Bawah */}
-        <div className="flex flex-col space-y-4">
-            {bottomLinks.map((link) => (
-            <Link
-                key={link.name}
-                href={link.href}
-                className="flex items-center justify-between rounded-lg p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100"
-            >
-                <div className="flex items-center space-x-3">
-                <link.icon className="h-5 w-5" />
-                <span>{link.name}</span>
-                </div>
-            </Link>
-        ))}
-
-        <hr />
-
+        
+        <div className="flex flex-col space-y-4 pt-4 mt-auto border-t border-gray-200">
             <button
                 onClick={onToggle}
                 className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
@@ -90,13 +102,10 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
             <FiArrowLeftCircle className="h-5 w-5" />
             <span>Sembunyikan</span>
             </button>
-
+            
             <div className="flex items-center justify-around text-sidebar-text">
-            <FiFilter className="h-5 w-5 hover:text-active-pink-text" />
-            <FiAward className="h-5 w-5 hover:text-active-pink-text" />
-            <FiSettings className="h-5 w-5 hover:text-active-pink-text" />
             </div>
         </div>
-        </aside>
+    </aside>
     );
 }
