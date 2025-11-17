@@ -20,8 +20,8 @@ import {
     const navLinks = [
     { name: 'Dashboard', href: '/parentDashboard', icon: FiHome },
     { name: 'Anak Saya', href: '/parentDashboard/my-children', icon: FiUsers },
-    { name: 'Laporan Harian', href: '/parentDashboard/daily-reports', icon: FiClipboard },
-    { name: 'Laporan Semester', href: '/parentDashboard/semester-reports', icon: FiBookOpen },
+    { name: 'Jadwal Kegiatan', href: '/parentDashboard/schedules', icon: FiSettings },
+    { name: 'Laporan', href: '/parentDashboard/reports', icon: FiClipboard },
     ];
 
     const bottomLinks = [

@@ -92,6 +92,7 @@ export default function ChildDetailPage() {
         }
     };
 
+    // Import utility functions dari utils/formatters
     const calculateAge = (birthDate: string) => {
         const today = new Date();
         const birth = new Date(birthDate);
@@ -117,6 +118,10 @@ export default function ChildDetailPage() {
             currency: 'IDR',
             minimumFractionDigits: 0,
         }).format(amount);
+    };
+
+    const formatTime = (time: string) => {
+        return time.replace(/:\d{2}$/, '');
     };
 
     const dayOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -263,7 +268,7 @@ export default function ChildDetailPage() {
                                             <div className="flex items-center space-x-2">
                                                 <FiClock className="h-4 w-4 text-gray-400" />
                                                 <span className="text-gray-600">
-                                                    {schedule.startTime} - {schedule.endTime}
+                                                    {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
                                                 </span>
                                             </div>
 

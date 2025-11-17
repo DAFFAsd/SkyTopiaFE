@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiUsers, FiClipboard, FiDollarSign } from 'react-icons/fi';
+import { FiUsers, FiClipboard, FiDollarSign, FiCalendar } from 'react-icons/fi';
 
 // Tipe data (ditebak dari controller lo)
 type Child = {
@@ -144,15 +144,19 @@ type Child = {
             )}
         </div>
         
-        {/* Link Cepat (Contoh) */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Link href="/parentDashboard/daily-reports" className="flex h-32 items-center space-x-4 rounded-lg bg-stat-pink-bg p-6 transition-transform hover:scale-105">
+        {/* Link Cepat */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <Link href="/parentDashboard/reports" className="flex h-32 items-center space-x-4 rounded-lg bg-stat-pink-bg p-6 transition-transform hover:scale-105">
                 <FiClipboard className="h-8 w-8 text-pink-500" />
-                <span className="text-lg font-semibold text-brand-purple">Lihat Laporan Harian</span>
+                <span className="text-lg font-semibold text-brand-purple">Lihat Laporan</span>
+            </Link>
+            <Link href="/parentDashboard/schedules" className="flex h-32 items-center space-x-4 rounded-lg bg-welcome-yellow p-6 transition-transform hover:scale-105">
+                <FiCalendar className="h-8 w-8 text-yellow-600" />
+                <span className="text-lg font-semibold text-brand-purple">Jadwal Kegiatan</span>
             </Link>
             <Link href="/parentDashboard/billing" className="flex h-32 items-center space-x-4 rounded-lg bg-stat-blue-bg/50 p-6 transition-transform hover:scale-105">
                 <FiDollarSign className="h-8 w-8 text-sky-500" />
-                <span className="text-lg font-semibold text-brand-purple">Lihat Riwayat Tagihan</span>
+                <span className="text-lg font-semibold text-brand-purple">Tagihan</span>
             </Link>
         </div>
         

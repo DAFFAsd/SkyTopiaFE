@@ -18,11 +18,15 @@ import {
     FiSettings,
     FiPackage,
     FiBarChart,
+    FiFileText,
 } from 'react-icons/fi';
 
-// Admin sidebar mirrors the dashboard sidebar but with 'Anak' and 'Guru' removed
+// Admin sidebar navigation links
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
+    { name: 'Manajemen Pengguna', href: '/adminDashboard/users', icon: FiUsers },
+    { name: 'Data Anak', href: '/adminDashboard/children', icon: FiUsers },
+    { name: 'Laporan Perkembangan', href: '/adminDashboard/reports', icon: FiFileText },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
     { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
     { name: 'Kurikulum dan Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
