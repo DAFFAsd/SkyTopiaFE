@@ -22,9 +22,9 @@ import {
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
+    { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCalendar },
     { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
     { name: 'Kurikulum dan Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
-    { name: 'Permintaan Inventaris', href: '/adminDashboard/requests', icon: FiPackage },
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
 ];
 

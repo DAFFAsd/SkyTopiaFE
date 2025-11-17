@@ -2,100 +2,78 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiArrowLeft } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiMail, FiPhone, FiArrowLeft } from 'react-icons/fi';
 
-interface User {
-  id: string;
+interface Teacher {
+  _id: string;
   name: string;
   email: string;
-  phone: string;
-  role: string;
+  phone?: string;
   createdAt: string;
 }
 
-export default function DatabasePage() {
-  const [users, setUsers] = useState<User[]>([]);
+export default function TeacherPage() {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    role: 'Teacher'
-  });
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    fetchTeachers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchTeachers = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No authentication token found');
-        return;
-      }
+      if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/users', {
+      const response = await fetch('http://localhost:3000/api/users?role=Teacher', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to fetch users');
+      if (response.ok && data.success) {
+        setTeachers(data.users || []);
       }
-
-      // Filter only teachers
-      const teachers = data.users.filter((user: User) => user.role === 'Teacher');
-      setUsers(teachers);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Failed to fetch teachers:', err);
+      setError('Gagal mengambil data guru');
     } finally {
       setLoading(false);
     }
   };
 
   const openAddModal = () => {
-    setEditingUser(null);
+    setEditingTeacher(null);
     setFormData({
       name: '',
       email: '',
       phone: '',
-      password: '',
-      role: 'Teacher'
+      password: ''
     });
     setShowModal(true);
   };
 
-  const openEditModal = (user: User) => {
-    setEditingUser(user);
+  const openEditModal = (teacher: Teacher) => {
+    setEditingTeacher(teacher);
     setFormData({
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      password: '',
-      role: user.role
+      name: teacher.name,
+      email: teacher.email,
+      phone: teacher.phone || '',
+      password: ''
     });
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
-    setEditingUser(null);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      role: 'Teacher'
-    });
+    setEditingTeacher(null);
+    setFormData({});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,15 +87,27 @@ export default function DatabasePage() {
         return;
       }
 
-      const url = editingUser
-        ? `http://localhost:3000/api/users/${editingUser.id}`
-        : 'http://localhost:3000/api/users/register';
+      const url = editingTeacher
+        ? `http://localhost:3000/api/users/${editingTeacher._id}`
+        : `http://localhost:3000/api/register`;
 
-      const method = editingUser ? 'PUT' : 'POST';
+      const method = editingTeacher ? 'PUT' : 'POST';
 
-      const body = editingUser
-        ? { name: formData.name, phone: formData.phone, ...(formData.password && { password: formData.password }) }
-        : formData;
+      // Prepare data - remove password if empty for update
+      const data: any = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      };
+
+      if (editingTeacher) {
+        if (formData.password) {
+          data.password = formData.password;
+        }
+      } else {
+        data.password = formData.password;
+        data.role = 'Teacher';
+      }
 
       const response = await fetch(url, {
         method,
@@ -125,16 +115,16 @@ export default function DatabasePage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to save user');
+      if (!response.ok || !responseData.success) {
+        throw new Error(responseData.message || 'Failed to save teacher');
       }
 
-      await fetchUsers(); // Refresh the list
+      await fetchTeachers();
       closeModal();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -143,8 +133,8 @@ export default function DatabasePage() {
     }
   };
 
-  const deleteUser = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this teacher?')) return;
+  const deleteTeacher = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus guru ini?')) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -162,10 +152,10 @@ export default function DatabasePage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to delete user');
+        throw new Error(data.message || 'Failed to delete teacher');
       }
 
-      setUsers(users.filter(user => user.id !== id));
+      setTeachers(teachers.filter(t => t._id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
@@ -174,22 +164,10 @@ export default function DatabasePage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+        <h1 className="text-2xl font-bold text-brand-purple">Manajemen Guru</h1>
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-        <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
       </div>
     );
   }
@@ -200,8 +178,11 @@ export default function DatabasePage() {
         <FiArrowLeft className="h-4 w-4" />
         <span>Kembali ke Dasbor</span>
       </Link>
+      <h1 className="text-2xl font-bold text-brand-purple">Manajemen Guru</h1>
+
+      {/* Content */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+        <h2 className="text-xl font-semibold text-gray-900">Daftar Guru</h2>
         <button
           onClick={openAddModal}
           className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
@@ -211,12 +192,74 @@ export default function DatabasePage() {
         </button>
       </div>
 
-      {users.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          Tidak ada data guru yang tersedia.
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
         </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      )}
+
+      {/* Teachers List - Card View */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {teachers.map((teacher) => (
+          <div
+            key={teacher._id}
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition border border-gray-200"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{teacher.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">ID: {teacher._id.substring(0, 8)}...</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => openEditModal(teacher)}
+                  className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded"
+                  title="Edit"
+                >
+                  <FiEdit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => deleteTeacher(teacher._id)}
+                  className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded"
+                  title="Delete"
+                >
+                  <FiTrash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t border-gray-200 pt-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <FiMail className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-600">{teacher.email}</span>
+              </div>
+              {teacher.phone && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <FiPhone className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">{teacher.phone}</span>
+                </div>
+              )}
+              <div className="text-xs text-gray-500 pt-2">
+                Bergabung: {new Date(teacher.createdAt).toLocaleDateString('id-ID')}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {teachers.length === 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+          <p className="text-gray-600 font-medium">Belum ada data guru</p>
+          <p className="text-gray-500 text-sm mt-1">Klik tombol "Tambah Guru" untuk menambahkan guru baru</p>
+        </div>
+      )}
+
+      {/* Table View for Admin Reference */}
+      {teachers.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden mt-6">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Daftar Lengkap</h3>
+          </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -230,39 +273,33 @@ export default function DatabasePage() {
                   Telepon
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tanggal Dibuat
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Aksi
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id}>
+              {teachers.map((teacher) => (
+                <tr key={teacher._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {user.name}
+                    {teacher.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.email}
+                    {teacher.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.phone || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {teacher.phone || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => openEditModal(user)}
+                        onClick={() => openEditModal(teacher)}
                         className="text-blue-600 hover:text-blue-900"
                         title="Edit"
                       >
                         <FiEdit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => deleteUser(user.id)}
+                        onClick={() => deleteTeacher(teacher._id)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete"
                       >
@@ -283,7 +320,7 @@ export default function DatabasePage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-brand-purple">
-                {editingUser ? 'Edit Guru' : 'Tambah Guru'}
+                {editingTeacher ? 'Edit Guru' : 'Tambah Guru'}
               </h2>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <FiX className="h-6 w-6" />
@@ -293,11 +330,11 @@ export default function DatabasePage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama
+                  Nama Guru
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
@@ -310,11 +347,10 @@ export default function DatabasePage() {
                 </label>
                 <input
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  disabled={!!editingUser}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
                 />
               </div>
 
@@ -324,7 +360,7 @@ export default function DatabasePage() {
                 </label>
                 <input
                   type="tel"
-                  value={formData.phone}
+                  value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
                 />
@@ -332,13 +368,14 @@ export default function DatabasePage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password {editingUser && '(kosongkan jika tidak ingin mengubah)'}
+                  Password {editingTeacher && '(Kosongkan jika tidak ingin diubah)'}
                 </label>
                 <input
                   type="password"
-                  value={formData.password}
+                  value={formData.password || ''}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required={!editingUser}
+                  required={!editingTeacher}
+                  placeholder={editingTeacher ? 'Tidak wajib diisi' : 'Minimal 8 karakter'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
                 />
               </div>

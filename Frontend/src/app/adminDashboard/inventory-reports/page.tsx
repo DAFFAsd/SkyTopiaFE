@@ -119,7 +119,7 @@ export default function InventoryReportsPage() {
 
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold text-brand-purple">
-                    Laporan Permintaan Inventaris
+                    Permintaan Inventaris
                 </h1>
                 <button
                     onClick={() => fetchReportData()}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiCalendar } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
 
 interface Curriculum {
   _id: string;
@@ -21,18 +21,27 @@ interface Schedule {
   curriculum: {
     title: string;
   };
+  date: string;
   day: string;
   startTime: string;
   endTime: string;
   teacher: {
     name: string;
+    _id: string;
   };
   location: string;
+}
+
+interface Teacher {
+  _id: string;
+  name: string;
+  email: string;
 }
 
 export default function CurriculumPage() {
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'curriculum' | 'schedule'>('curriculum');
@@ -40,10 +49,12 @@ export default function CurriculumPage() {
   const [editingItem, setEditingItem] = useState<Curriculum | Schedule | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date()); // Week view start date - today
 
   useEffect(() => {
     fetchCurriculums();
     fetchSchedules();
+    fetchTeachers();
   }, []);
 
   const fetchCurriculums = async () => {
@@ -88,6 +99,92 @@ export default function CurriculumPage() {
     }
   };
 
+  const fetchTeachers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      console.log('Fetching teachers with token...');
+      const response = await fetch('http://localhost:3000/api/users?role=Teacher', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('Teachers response status:', response.status);
+      const data = await response.json();
+      console.log('Teachers data:', data);
+      
+      if (response.ok && data.success) {
+        console.log('Setting teachers:', data.users);
+        setTeachers(data.users || []);
+      } else {
+        console.error('Failed to fetch teachers:', data.message);
+      }
+    } catch (err) {
+      console.error('Failed to fetch teachers:', err);
+    }
+  };
+
+  // Calendar helper functions
+  const getDaysInWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day;
+    const startDate = new Date(d.setDate(diff));
+    
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const currentDay = new Date(startDate);
+      currentDay.setDate(startDate.getDate() + i);
+      days.push(currentDay);
+    }
+    return days;
+  };
+
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const dayNamesEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const getSchedulesForDay = (date: Date) => {
+    // Filter schedules by exact date match
+    return schedules.filter(s => {
+      if (!s.date) return false;
+      const scheduleDate = new Date(s.date);
+      return scheduleDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const getDayDate = (dayName: string): string => {
+    const days = getDaysInWeek(currentDate);
+    const dayIndex = dayNamesEn.indexOf(dayName);
+    if (dayIndex === -1) return 'Pilih hari terlebih dahulu';
+    const selectedDate = days[dayIndex];
+    return selectedDate.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const getDateDayName = (dateString: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return dayNamesEn[date.getDay()];
+  };
+
+  const formatDateDisplay = (dateString: string): string => {
+    if (!dateString) return 'Pilih tanggal';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const previousWeek = () => {
+    setCurrentDate(new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000));
+  };
+
+  const nextWeek = () => {
+    setCurrentDate(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+  };
+
   const openAddModal = (type: 'curriculum' | 'schedule') => {
     setActiveTab(type);
     setEditingItem(null);
@@ -101,11 +198,11 @@ export default function CurriculumPage() {
       setFormData({
         title: '',
         curriculum: '',
-        day: '',
+        date: new Date().toISOString().split('T')[0], // Set default to today
         startTime: '',
         endTime: '',
         teacher: '',
-        location: ''
+        day: '' // Will be set based on date
       });
     }
     setShowModal(true);
@@ -136,11 +233,22 @@ export default function CurriculumPage() {
       }
 
       const isCurriculum = activeTab === 'curriculum';
-      const url = editingItem
-        ? `http://localhost:3000/api/curriculums/${editingItem._id}`
-        : `http://localhost:3000/api/curriculums`;
-
-      const method = editingItem ? 'PUT' : 'POST';
+      
+      // Determine endpoint based on activeTab, not editingItem type
+      let url: string;
+      let method: string;
+      
+      if (isCurriculum) {
+        url = editingItem
+          ? `http://localhost:3000/api/curriculums/${editingItem._id}`
+          : `http://localhost:3000/api/curriculums`;
+        method = editingItem ? 'PUT' : 'POST';
+      } else {
+        url = editingItem
+          ? `http://localhost:3000/api/schedules/${editingItem._id}`
+          : `http://localhost:3000/api/schedules`;
+        method = editingItem ? 'PUT' : 'POST';
+      }
 
       const response = await fetch(url, {
         method,
@@ -215,19 +323,11 @@ export default function CurriculumPage() {
 
   return (
     <div className="space-y-4">
+      <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+        <FiArrowLeft className="h-4 w-4" />
+        <span>Kembali ke Dasbor</span>
+      </Link>
       <h1 className="text-2xl font-bold text-brand-purple">Kurikulum Dan Jadwal</h1>
-
-      {/* Google Calendar Integration Placeholder */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center space-x-2">
-          <FiCalendar className="h-5 w-5 text-blue-600" />
-          <span className="font-medium text-blue-800">Google Calendar Integration</span>
-        </div>
-        <p className="text-blue-700 mt-1 text-sm">
-          Integrasi dengan Google Calendar akan memungkinkan sinkronisasi jadwal secara otomatis.
-          Fitur ini sedang dalam pengembangan.
-        </p>
-      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -337,83 +437,120 @@ export default function CurriculumPage() {
         </div>
       )}
 
-      {/* Schedule Table */}
+      {/* Schedule Calendar View */}
       {activeTab === 'schedule' && (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Judul
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Kurikulum
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hari
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Waktu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Guru
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Lokasi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {schedules.map((schedule) => (
-                <tr key={schedule._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {schedule.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.curriculum?.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.day}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.startTime} - {schedule.endTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.teacher?.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.location}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => openEditModal(schedule, 'schedule')}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Edit"
-                      >
-                        <FiEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteItem(schedule._id, 'schedule')}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <FiTrash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+        <div className="space-y-4">
+            {/* Calendar Header */}
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
+              <button
+                onClick={previousWeek}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <FiChevronLeft className="h-5 w-5 text-brand-purple" />
+              </button>
+              <div className="flex items-center gap-2 flex-1 justify-center">
+                <h3 className="text-lg font-semibold text-gray-900 text-center">
+                  {getDaysInWeek(currentDate)[0].toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}{' '}
+                  -{' '}
+                  {getDaysInWeek(currentDate)[6].toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </h3>
+              </div>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={() => setCurrentDate(new Date())}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-medium whitespace-nowrap"
+                >
+                  Minggu Ini
+                </button>
+                <input
+                  type="month"
+                  value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
+                  onChange={(e) => {
+                    const [year, month] = e.target.value.split('-');
+                    setCurrentDate(new Date(parseInt(year), parseInt(month) - 1, 1));
+                  }}
+                  className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                />
+              </div>
+              <button
+                onClick={nextWeek}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <FiChevronRight className="h-5 w-5 text-brand-purple" />
+              </button>
+            </div>            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-2">
+              {getDaysInWeek(currentDate).map((day, idx) => (
+                <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden min-h-96">
+                  {/* Day Header */}
+                  <div className="bg-gradient-to-r from-brand-purple to-purple-600 text-white p-3">
+                    <div className="text-sm font-semibold">{dayNames[day.getDay()]}</div>
+                    <div className="text-2xl font-bold">{day.getDate()}</div>
+                  </div>
+
+                  {/* Day Content */}
+                  <div className="p-3 bg-gray-50 h-80 overflow-y-auto space-y-2">
+                    {getSchedulesForDay(day).length > 0 ? (
+                      getSchedulesForDay(day).map((schedule) => (
+                        <div
+                          key={schedule._id}
+                          className="bg-white p-2 rounded border-l-4 border-brand-purple hover:shadow-md transition group"
+                        >
+                          <div className="flex justify-between items-start gap-1">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-semibold text-brand-purple truncate">
+                                {schedule.startTime} - {schedule.endTime}
+                              </div>
+                              <div className="text-xs font-medium text-gray-900 truncate">
+                                {schedule.title}
+                              </div>
+                              <div className="text-xs text-gray-600 truncate">
+                                {schedule.teacher?.name || 'Belum assign'}
+                              </div>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                              <button
+                                onClick={() => openEditModal(schedule, 'schedule')}
+                                className="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded"
+                                title="Edit"
+                              >
+                                <FiEdit className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteItem(schedule._id, 'schedule');
+                                }}
+                                className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                                title="Delete"
+                              >
+                                <FiTrash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-400 text-xs py-20">
+                        Tidak ada jadwal
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-          {schedules.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              Tidak ada data jadwal yang tersedia.
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -472,6 +609,30 @@ export default function CurriculumPage() {
                 </>
               ) : (
                 <>
+                  {/* Info Tanggal */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900">
+                      📅 Jadwal untuk: <span className="font-semibold">{formatDateDisplay(formData.date)}</span>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tanggal
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date || ''}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        const dayName = getDateDayName(newDate);
+                        setFormData({ ...formData, date: newDate, day: dayName });
+                      }}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Judul
@@ -501,27 +662,6 @@ export default function CurriculumPage() {
                           {curriculum.title}
                         </option>
                       ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hari
-                    </label>
-                    <select
-                      value={formData.day || ''}
-                      onChange={(e) => setFormData({ ...formData, day: e.target.value })}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    >
-                      <option value="">Pilih Hari</option>
-                      <option value="Monday">Senin</option>
-                      <option value="Tuesday">Selasa</option>
-                      <option value="Wednesday">Rabu</option>
-                      <option value="Thursday">Kamis</option>
-                      <option value="Friday">Jumat</option>
-                      <option value="Saturday">Sabtu</option>
-                      <option value="Sunday">Minggu</option>
                     </select>
                   </div>
 
@@ -557,26 +697,19 @@ export default function CurriculumPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Guru
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.teacher || ''}
                       onChange={(e) => setFormData({ ...formData, teacher: e.target.value })}
-                      placeholder="ID Guru"
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Lokasi
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.location || ''}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    />
+                    >
+                      <option value="">Pilih Guru</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher._id} value={teacher._id}>
+                          {teacher.name} ({teacher.email})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </>
               )}
@@ -602,8 +735,6 @@ export default function CurriculumPage() {
           </div>
         </div>
       )}
-
-      <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
     </div>
   );
 }

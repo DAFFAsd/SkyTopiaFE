@@ -139,7 +139,14 @@ exports.login = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
     try {
         // Find all users and exclude password field from response
-        const users = await User.find().select('-password');
+        const { role } = req.query;
+        
+        let query = {};
+        if (role) {
+            query.role = role;
+        }
+        
+        const users = await User.find(query).select('-password');
         res.json({ success: true, users });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
