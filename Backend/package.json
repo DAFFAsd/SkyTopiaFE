@@ -1,7 +1,19 @@
 {
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/testing/**/*.testing.js"],
+    "collectCoverageFrom": [
+      "src/controllers/**/*.js",
+      "src/services/**/*.js"
+    ],
+    "coverageDirectory": "testing/coverage"
   },
   "dependencies": {
     "@langchain/core": "^1.0.2",
@@ -10,7 +22,7 @@
     "@langchain/langgraph-checkpoint-mongodb": "^1.0.0",
     "@langchain/mongodb": "^1.0.0",
     "bcrypt": "^5.1.1",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "debug": "^4.4.0",
     "dotenv": "^16.6.1",
@@ -20,12 +32,14 @@
     "moment": "^2.30.1",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.2",
-    "multer": "^1.4.5-lts.2",
-    "multer-storage-cloudinary": "^3.0.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^2.2.1",
     "node-cron": "^4.2.1",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.1.4"
   }
 }
