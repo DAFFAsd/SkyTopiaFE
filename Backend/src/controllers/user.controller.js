@@ -345,3 +345,14 @@ exports.getDashboardStats = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// Logout - Protected route
+exports.logout = async (req, res) => {
+    try {
+        // Untuk JWT stateless, logout cukup di frontend (hapus token)
+        // Jika ada refresh token atau blacklist, implementasikan di sini
+        res.json({ success: true, message: 'Logged out successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};

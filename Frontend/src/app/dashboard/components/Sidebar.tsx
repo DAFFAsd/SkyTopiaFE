@@ -3,11 +3,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation'; 
+import { usePathname, useRouter } from 'next/navigation'; 
 
 import {
     FiHome, FiGrid, FiUsers, FiUser, FiCalendar, FiDollarSign, 
-    FiArrowLeftCircle, FiFilter, FiAward, FiSettings
+    FiArrowLeftCircle, FiFilter, FiAward, FiSettings, FiLogOut
     } from 'react-icons/fi';
 
     const navLinks = [
@@ -25,6 +25,27 @@ import {
 
     export default function Sidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname(); 
+    const router = useRouter();
+
+    const logout = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await fetch('/api/users/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            localStorage.removeItem('token');
+            router.push('/login');
+        }
+    };
 
     return (
         <aside className="w-64 flex-col bg-sidebar-bg p-6 border-r border-gray-200 hidden md:flex">
@@ -90,6 +111,14 @@ import {
             >
             <FiArrowLeftCircle className="h-5 w-5" />
             <span>Sembunyikan</span>
+            </button>
+            
+            <button
+                onClick={logout}
+                className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
+            >
+            <FiLogOut className="h-5 w-5" />
+            <span>Logout</span>
             </button>
             
             <div className="flex items-center justify-around text-sidebar-text">

@@ -8,7 +8,6 @@ interface Curriculum {
   _id: string;
   title: string;
   description: string;
-  grade: string;
   createdBy: {
     name: string;
   };
@@ -191,8 +190,7 @@ export default function CurriculumPage() {
     if (type === 'curriculum') {
       setFormData({
         title: '',
-        description: '',
-        grade: ''
+        description: ''
       });
     } else {
       setFormData({
@@ -385,9 +383,6 @@ export default function CurriculumPage() {
                   Judul
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Grade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Deskripsi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -400,9 +395,6 @@ export default function CurriculumPage() {
                 <tr key={curriculum._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {curriculum.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {curriculum.grade}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
                     {curriculum.description}
@@ -579,18 +571,6 @@ export default function CurriculumPage() {
                       value={formData.title || ''}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Grade
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.grade || ''}
-                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
                     />
                   </div>

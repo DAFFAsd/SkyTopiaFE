@@ -26,7 +26,6 @@ interface Curriculum {
     _id: string;
     title: string;
     description: string;
-    grade: string;
 }
 
 export default function SchedulesPage() {
@@ -331,7 +330,6 @@ export default function SchedulesPage() {
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <h4 className="text-lg font-semibold text-gray-900">{curr.title}</h4>
-                                        <p className="text-sm text-gray-600 mt-1">Grade: {curr.grade}</p>
                                         <p className="text-sm text-gray-600 mt-2">{curr.description}</p>
                                     </div>
                                     <div className="flex-shrink-0">
