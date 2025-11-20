@@ -48,6 +48,7 @@ export default function InventoryReportsPage() {
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [requestSearchTerm, setRequestSearchTerm] = useState('');
     const [showItemForm, setShowItemForm] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [itemFormData, setItemFormData] = useState({
@@ -62,7 +63,7 @@ export default function InventoryReportsPage() {
         } else {
             fetchItems();
         }
-    }, [activeTab, filter, dateFilter]);
+    }, [activeTab, filter, dateFilter, requestSearchTerm]);
 
     const fetchReportData = async () => {
         try {
@@ -71,8 +72,9 @@ export default function InventoryReportsPage() {
             const params = new URLSearchParams();
             if (filter !== 'all') params.append('status', filter);
             if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
+            if (requestSearchTerm) params.append('search', requestSearchTerm);
 
-            const response = await fetch(`/api/inventory/requests/report?${params.toString()}`, {
+            const response = await fetch(`/api/inventory/requests?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
@@ -259,10 +261,8 @@ export default function InventoryReportsPage() {
         }
     };
 
-    const filteredRequests = requests.filter(request =>
-        request.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requestedBy.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Data dari backend sudah di-filter, jadi langsung pakai requests
+    const displayRequests = requests;
 
     return (
         <div className="space-y-6">
@@ -361,38 +361,49 @@ export default function InventoryReportsPage() {
 
                     {/* Filters */}
                     <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center space-x-2">
-                                <FiFilter className="h-5 w-5 text-gray-400" />
-                                <span className="text-sm font-medium text-gray-700">Filter:</span>
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center space-x-2">
+                                    <FiFilter className="h-5 w-5 text-gray-400" />
+                                    <span className="text-sm font-medium text-gray-700">Filter:</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <label htmlFor="statusFilter" className="text-sm text-gray-600">Status:</label>
+                                    <select
+                                        id="statusFilter"
+                                        value={filter}
+                                        onChange={(e) => setFilter(e.target.value as any)}
+                                        className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+                                    >
+                                        <option value="all">Semua Status</option>
+                                        <option value="pending">Menunggu</option>
+                                        <option value="approved">Disetujui</option>
+                                        <option value="rejected">Ditolak</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <label htmlFor="dateFilter" className="text-sm text-gray-600">Periode:</label>
+                                    <select
+                                        id="dateFilter"
+                                        value={dateFilter}
+                                        onChange={(e) => setDateFilter(e.target.value as any)}
+                                        className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+                                    >
+                                        <option value="all">Semua Waktu</option>
+                                        <option value="today">Hari Ini</option>
+                                        <option value="week">Minggu Ini</option>
+                                        <option value="month">Bulan Ini</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <label htmlFor="statusFilter" className="text-sm text-gray-600">Status:</label>
-                                <select
-                                    id="statusFilter"
-                                    value={filter}
-                                    onChange={(e) => setFilter(e.target.value as any)}
-                                    className="rounded-md border border-gray-300 px-3 py-1 text-sm"
-                                >
-                                    <option value="all">Semua Status</option>
-                                    <option value="pending">Menunggu</option>
-                                    <option value="approved">Disetujui</option>
-                                    <option value="rejected">Ditolak</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <label htmlFor="dateFilter" className="text-sm text-gray-600">Periode:</label>
-                                <select
-                                    id="dateFilter"
-                                    value={dateFilter}
-                                    onChange={(e) => setDateFilter(e.target.value as any)}
-                                    className="rounded-md border border-gray-300 px-3 py-1 text-sm"
-                                >
-                                    <option value="all">Semua Waktu</option>
-                                    <option value="today">Hari Ini</option>
-                                    <option value="week">Minggu Ini</option>
-                                    <option value="month">Bulan Ini</option>
-                                </select>
+                            <div>
+                                <input
+                                    type="text"
+                                    placeholder="Cari berdasarkan nama barang atau nama guru..."
+                                    value={requestSearchTerm}
+                                    onChange={(e) => setRequestSearchTerm(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                                />
                             </div>
                         </div>
                     </div>
@@ -417,7 +428,7 @@ export default function InventoryReportsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredRequests.map((request) => (
+                                        {displayRequests.map((request) => (
                                             <tr key={request._id} className="border-b border-gray-100 hover:bg-gray-50">
                                                 <td className="py-3 px-4 text-gray-900 font-medium">{request.itemName}</td>
                                                 <td className="py-3 px-4 text-gray-600">{request.requestedBy.name}</td>

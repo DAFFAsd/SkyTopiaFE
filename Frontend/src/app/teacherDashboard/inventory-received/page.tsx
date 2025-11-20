@@ -1,17 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { FiArrowLeft, FiPlus, FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiLoader, FiCheck } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
-interface InventoryItem {
-    _id: string;
-    name: string;
-    description: string;
-    quantity: number;
-}
-
-interface MyRequest {
+interface InventoryRequest {
     _id: string;
     itemName: string;
     quantity: number;
@@ -20,16 +13,33 @@ interface MyRequest {
     approvedAt?: string;
 }
 
-export default function InventoryRequestPage() {
-    const [items, setItems] = useState<InventoryItem[]>([]);
-    const [myRequests, setMyRequests] = useState<MyRequest[]>([]);
+interface ReceivedItem {
+    _id: string;
+    itemName: string;
+    quantityRequested: number;
+    quantityReceived: number;
+    requestId: string;
+    receivedDate: string;
+    notes?: string;
+    receivedBy: {
+        name: string;
+    };
+}
+
+export default function InventoryReceivedPage() {
+    const [approvedRequests, setApprovedRequests] = useState<InventoryRequest[]>([]);
+    const [receivedItems, setReceivedItems] = useState<ReceivedItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({ itemName: '', quantity: 1 });
     const [submitting, setSubmitting] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+    const [formData, setFormData] = useState({
+        requestId: '',
+        quantityReceived: 0,
+        notes: ''
+    });
+    const [selectedRequest, setSelectedRequest] = useState<InventoryRequest | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -39,35 +49,40 @@ export default function InventoryRequestPage() {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 setError('Token tidak ditemukan. Silakan login kembali');
                 setLoading(false);
                 return;
             }
 
-            // Fetch available items
-            const itemsRes = await fetch('/api/inventory/items', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const itemsData = await itemsRes.json();
-            console.log('Items Response:', itemsData);
-            if (itemsData.success) {
-                setItems(itemsData.items || []);
-            } else {
-                setError(itemsData.message || 'Gagal memuat daftar barang');
-            }
-
-            // Fetch my requests
+            // Fetch approved requests
             const requestsRes = await fetch('/api/inventory/my-requests', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const requestsData = await requestsRes.json();
-            console.log('My Requests Response:', requestsData);
+
             if (requestsData.success) {
-                setMyRequests(requestsData.requests || []);
+                // Filter hanya yang approved
+                const approved = requestsData.requests.filter(
+                    (req: InventoryRequest) => req.status === 'Approved'
+                );
+                setApprovedRequests(approved);
             } else {
-                setError(requestsData.message || 'Gagal memuat permintaan Anda');
+                setError(requestsData.message || 'Gagal memuat data permintaan');
+            }
+
+            // Fetch received items
+            const receivedRes = await fetch('/api/inventory/received', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const receivedData = await receivedRes.json();
+
+            if (receivedData.success) {
+                setReceivedItems(receivedData.received || []);
+            } else {
+                // Endpoint mungkin belum ada, jadi jangan set error
+                setReceivedItems([]);
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -77,22 +92,25 @@ export default function InventoryRequestPage() {
         }
     };
 
+    const handleSelectRequest = (request: InventoryRequest) => {
+        setSelectedRequest(request);
+        setFormData({
+            requestId: request._id,
+            quantityReceived: request.quantity,
+            notes: ''
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.itemName || formData.quantity < 1) {
+
+        if (!formData.requestId || formData.quantityReceived < 1) {
             setError('Silakan isi semua field dengan benar');
             return;
         }
 
-        // Validate quantity against available stock
-        const item = items.find(i => i.name === formData.itemName);
-        if (!item) {
-            setError('Barang tidak ditemukan');
-            return;
-        }
-
-        if (formData.quantity > item.quantity) {
-            setError(`Stok tidak cukup. Stok tersedia: ${item.quantity}`);
+        if (selectedRequest && formData.quantityReceived > selectedRequest.quantity) {
+            setError(`Jumlah yang diterima tidak boleh melebihi ${selectedRequest.quantity}`);
             return;
         }
 
@@ -101,61 +119,40 @@ export default function InventoryRequestPage() {
             setError('');
             const token = localStorage.getItem('token');
 
-            console.log('Submitting:', formData);
-
-            const res = await fetch('/api/inventory/requests', {
+            const res = await fetch('/api/inventory/received', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    requestId: formData.requestId,
+                    quantityReceived: formData.quantityReceived,
+                    notes: formData.notes
+                })
             });
 
             const data = await res.json();
-            console.log('Submit Response:', data);
-            
+
             if (data.success) {
-                setSuccess('Permintaan inventaris berhasil dibuat!');
-                setFormData({ itemName: '', quantity: 1 });
-                setSelectedItem(null);
+                setSuccess('Barang berhasil dicatat sebagai diterima!');
+                setFormData({
+                    requestId: '',
+                    quantityReceived: 0,
+                    notes: ''
+                });
+                setSelectedRequest(null);
                 setShowForm(false);
                 setTimeout(() => setSuccess(''), 3000);
                 fetchData();
             } else {
-                setError(data.message || 'Gagal membuat permintaan');
+                setError(data.message || 'Gagal mencatat barang diterima');
             }
         } catch (err: any) {
             console.error('Error:', err);
             setError(err.message || 'Terjadi kesalahan');
         } finally {
             setSubmitting(false);
-        }
-    };
-
-    const getStatusBadgeColor = (status: string) => {
-        switch (status) {
-            case 'Pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'Approved':
-                return 'bg-green-100 text-green-800';
-            case 'Rejected':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'Pending':
-                return 'Menunggu';
-            case 'Approved':
-                return 'Disetujui';
-            case 'Rejected':
-                return 'Ditolak';
-            default:
-                return status;
         }
     };
 
@@ -176,7 +173,7 @@ export default function InventoryRequestPage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
 
-            <h1 className="text-3xl font-bold text-brand-purple">Permintaan Inventaris</h1>
+            <h1 className="text-3xl font-bold text-brand-purple">Barang Diterima</h1>
 
             {error && (
                 <div className="rounded-lg bg-red-50 p-4 text-red-700">
@@ -196,64 +193,76 @@ export default function InventoryRequestPage() {
                 </div>
             ) : (
                 <>
-                    {/* Form Permintaan */}
+                    {/* Form Input */}
                     {!showForm ? (
                         <button
                             onClick={() => setShowForm(true)}
                             className="flex items-center space-x-2 bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90"
                         >
                             <FiPlus className="h-4 w-4" />
-                            <span>Buat Permintaan Baru</span>
+                            <span>Catat Barang Diterima</span>
                         </button>
                     ) : (
                         <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-xl font-bold text-brand-purple mb-4">Buat Permintaan Inventaris</h2>
+                            <h2 className="text-xl font-bold text-brand-purple mb-4">Input Barang Diterima</h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Pilih Barang
+                                        Pilih Permintaan yang Disetujui
                                     </label>
                                     <select
-                                        value={formData.itemName}
+                                        value={formData.requestId}
                                         onChange={(e) => {
-                                            const itemName = e.target.value;
-                                            setFormData({ ...formData, itemName });
-                                            const item = items.find(i => i.name === itemName);
-                                            setSelectedItem(item || null);
+                                            const requestId = e.target.value;
+                                            const request = approvedRequests.find(r => r._id === requestId);
+                                            handleSelectRequest(request!);
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple"
                                     >
-                                        <option value="">-- Pilih Barang --</option>
-                                        {items.map((item) => (
-                                            <option key={item._id} value={item.name}>
-                                                {item.name} (Tersedia: {item.quantity})
+                                        <option value="">-- Pilih Permintaan --</option>
+                                        {approvedRequests.map((request) => (
+                                            <option key={request._id} value={request._id}>
+                                                {request.itemName} - {request.quantity} unit (Disetujui: {formatDate(request.approvedAt || request.createdAt)})
                                             </option>
                                         ))}
                                     </select>
-                                    {selectedItem && (
+                                    {selectedRequest && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Stok tersedia: {selectedItem.quantity} unit
+                                            Permintaan: {selectedRequest.itemName} - {selectedRequest.quantity} unit
                                         </p>
                                     )}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Jumlah
+                                        Jumlah yang Diterima
                                     </label>
                                     <input
                                         type="number"
                                         min="1"
-                                        max={selectedItem?.quantity || 999}
-                                        value={formData.quantity}
-                                        onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                                        max={selectedRequest?.quantity || 999}
+                                        value={formData.quantityReceived}
+                                        onChange={(e) => setFormData({ ...formData, quantityReceived: parseInt(e.target.value) || 1 })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple"
                                     />
-                                    {selectedItem && (
+                                    {selectedRequest && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Maksimal: {selectedItem.quantity} unit
+                                            Maksimal: {selectedRequest.quantity} unit
                                         </p>
                                     )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Catatan (Opsional)
+                                    </label>
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        placeholder="Contoh: Barang dalam kondisi baik, semua sesuai pesanan"
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple"
+                                    />
                                 </div>
 
                                 <div className="flex space-x-2">
@@ -265,17 +274,20 @@ export default function InventoryRequestPage() {
                                         {submitting ? (
                                             <>
                                                 <FiLoader className="animate-spin h-4 w-4 inline mr-2" />
-                                                Mengirim...
+                                                Menyimpan...
                                             </>
                                         ) : (
-                                            'Kirim Permintaan'
+                                            <>
+                                                <FiCheck className="inline mr-2 h-4 w-4" />
+                                                Catat Penerimaan
+                                            </>
                                         )}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setShowForm(false);
-                                            setSelectedItem(null);
+                                            setSelectedRequest(null);
                                         }}
                                         className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
                                     >
@@ -286,33 +298,35 @@ export default function InventoryRequestPage() {
                         </div>
                     )}
 
-                    {/* Daftar Permintaan Saya */}
+                    {/* Daftar Barang Diterima */}
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Permintaan Saya</h2>
-                        {myRequests.length === 0 ? (
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Barang yang Telah Diterima</h2>
+                        {receivedItems.length === 0 ? (
                             <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-600">
-                                Tidak ada permintaan inventaris
+                                Belum ada barang yang dicatat sebagai diterima
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {myRequests.map((request) => (
-                                    <div key={request._id} className="bg-white rounded-lg shadow-sm p-4">
+                                {receivedItems.map((item) => (
+                                    <div key={item._id} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <h3 className="text-lg font-semibold text-gray-900">
-                                                    {request.itemName}
+                                                    {item.itemName}
                                                 </h3>
                                                 <div className="mt-2 text-sm text-gray-600 space-y-1">
-                                                    <p><span className="font-medium">Jumlah:</span> {request.quantity}</p>
-                                                    <p><span className="font-medium">Tanggal Permintaan:</span> {formatDate(request.createdAt)}</p>
-                                                    {request.approvedAt && (
-                                                        <p><span className="font-medium">Tanggal Disetujui:</span> {formatDate(request.approvedAt)}</p>
+                                                    <p><span className="font-medium">Diminta:</span> {item.quantityRequested} unit</p>
+                                                    <p><span className="font-medium">Diterima:</span> {item.quantityReceived} unit</p>
+                                                    <p><span className="font-medium">Tanggal Penerimaan:</span> {formatDate(item.receivedDate)}</p>
+                                                    {item.notes && (
+                                                        <p><span className="font-medium">Catatan:</span> {item.notes}</p>
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ml-4 ${getStatusBadgeColor(request.status)}`}>
-                                                {getStatusText(request.status)}
-                                            </span>
+                                            <div className="flex items-center space-x-2 bg-green-100 px-3 py-2 rounded-lg">
+                                                <FiCheck className="h-5 w-5 text-green-600" />
+                                                <span className="text-sm font-semibold text-green-600">Diterima</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
