@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-// Tambah FiChevronLeft untuk tombol back di mobile
 import { FiArrowLeft, FiSend, FiPlus, FiTrash2, FiLoader, FiMessageSquare, FiChevronLeft } from 'react-icons/fi';
 import Image from 'next/image'; 
 
@@ -18,13 +17,6 @@ interface Message {
     content: string;
     timestamp?: string;
 }
-interface ChatHistory {
-    _id: string;
-    thread_id: string;
-    user_id: string;
-    title?: string;
-    messages: Message[];
-}
 
 export default function ChatbotPage() {
     const [sessions, setSessions] = useState<Session[]>([]);
@@ -38,10 +30,8 @@ export default function ChatbotPage() {
     const [error, setError] = useState('');
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    // [FIX 1 - MOBILE STATE] State untuk mengatur tampilan Mobile (List vs Chat)
     const [showMobileChat, setShowMobileChat] = useState(false);
 
-    // Fungsi helper scroll ke bawah
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -73,7 +63,7 @@ export default function ChatbotPage() {
     
     const fetchChatHistory = async (threadId: string) => {
         setActiveThreadId(threadId);
-        setShowMobileChat(true); // [FIX 1] Pindah ke tampilan chat di mobile
+        setShowMobileChat(true); 
         setIsLoadingHistory(true);
         setMessages([]); 
         
@@ -89,7 +79,6 @@ export default function ChatbotPage() {
             
             if (data.success) {
                 setMessages(data.data.messages);
-                // Scroll ke bawah setelah data masuk
                 setTimeout(scrollToBottom, 100);
             } else {
                 throw new Error(data.message || 'Gagal mengambil riwayat chat');
@@ -105,11 +94,9 @@ export default function ChatbotPage() {
         setActiveThreadId(null);
         setMessages([]);
         setError('');
-        setShowMobileChat(true); // [FIX 1] Langsung masuk mode chat kosong di mobile
+        setShowMobileChat(true); 
     };
     
-    // GANTI TOTAL FUNGSI handleSubmit INI
-
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -119,7 +106,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setError('');
     setIsSending(true);
 
-    // 1. Update UI dengan pesan user (Optimistic)
     const newMsgObj: Message = { role: 'user', content: userMessageContent };
     setMessages(prev => [...prev, newMsgObj]);
     
@@ -129,7 +115,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error('Token tidak ditemukan');
         
-        // [LOGIKA API CALL SAMA]
         let response;
         const headers = {
             'Authorization': `Bearer ${token}`,
@@ -150,23 +135,16 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         const data = await response.json();
 
         if (data.success) {
-            // [FIX KUNCI]
-            // Hapus logika tebak-tebakan bot content.
-            // Langsung panggil fetchChatHistory untuk mendapatkan data bot yang sudah tersimpan di DB.
-            
             const targetThreadId = activeThreadId || data.thread_id;
             
             if (targetThreadId) {
-                // 1. Set ID baru jika ini chat pertama
                 if (!activeThreadId && data.thread_id) {
                     setActiveThreadId(data.thread_id);
                     fetchSessions(); 
                 }
                 
-                // 2. PAKSA TARIK SELURUH RIWAYAT CHAT DARI DB (Mirip refresh)
                 await fetchChatHistory(targetThreadId); 
             }
-            // Karena fetchChatHistory mengisi setMessages, kita tidak perlu setMessages lagi di sini.
             
         } else {
             throw new Error(data.message || 'Gagal mengirim pesan dari server');
@@ -176,7 +154,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         let errorMessage = "Gagal terhubung ke server.";
         if (err instanceof Error) errorMessage = err.message;
         setError(errorMessage);
-        // Hapus pesan user dari state jika terjadi error fatal
         setMessages(prev => prev.slice(0, -1)); 
     } finally {
         setIsSending(false);
@@ -199,14 +176,13 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             setSessions(prev => prev.filter(s => s.thread_id !== threadId));
             if (activeThreadId === threadId) {
                 handleNewChat();
-                setShowMobileChat(false); // Balik ke list sesi di mobile
+                setShowMobileChat(false); 
             }
         } catch (err: unknown) {
             if (err instanceof Error) alert(err.message);
         }
     };
 
-    // Auto scroll setiap messages berubah
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -217,7 +193,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
     return (
         <div className="space-y-4 flex flex-col h-[calc(100vh-100px)] md:h-[calc(100vh-80px)]"> 
-            {/* Header Dashboard Link */}
             <div className="flex-shrink-0">
                 <Link
                     href="/parentDashboard"
@@ -235,13 +210,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 </div>
             </div>
             
-            {/* CONTAINER UTAMA - Responsive Logic */}
             <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden bg-white rounded-xl shadow-sm border border-gray-200 relative">
-                
-                {/* --- KOLOM KIRI: DAFTAR SESI --- */}
-                {/* [FIX 1 - LAYOUT] Logic: Di Mobile, sembunyi kalau showMobileChat === true. Di Desktop (lg) selalu muncul */}
                 <div className={`
-                    w-full lg:w-1/3 flex-col bg-gray-50 border-r border-gray-200
+                    w-full lg:w-2/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full
                     ${showMobileChat ? 'hidden lg:flex' : 'flex'} 
                 `}>
                     <div className="p-4 border-b border-gray-200 bg-white">
@@ -291,13 +262,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </div>
                 </div>
 
-                {/* --- KOLOM KANAN: CHAT WINDOW --- */}
-                {/* [FIX 1 - LAYOUT] Logic: Di Mobile, sembunyi kalau showMobileChat === false. Di Desktop selalu muncul */}
                 <div className={`
-                    w-full lg:w-2/3 flex-col bg-white
+                    w-full lg:w-2/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full 
                     ${!showMobileChat ? 'hidden lg:flex' : 'flex'}
                 `}>
-                    {/* Header Chat Mobile (Tombol Back) */}
                     <div className="lg:hidden flex items-center p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
                         <button 
                             onClick={() => setShowMobileChat(false)}
@@ -308,10 +276,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                         <span className="font-semibold text-gray-800">Obrolan</span>
                     </div>
 
-                    {/* Area Pesan (Scrollable) */}
                     <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-white scroll-smooth">
                         
-                        {/* Tampilan Awal Kosong */}
                         {messages.length === 0 && !isLoadingHistory && (
                             <div className="flex flex-col justify-center items-center h-full opacity-60">
                                 <div className="bg-stat-blue-bg/30 p-6 rounded-full mb-4">
@@ -323,14 +289,12 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                             </div>
                         )}
                         
-                        {/* Loading History */}
                         {isLoadingHistory && (
                             <div className="flex justify-center items-center h-full">
                                 <FiLoader className="h-8 w-8 text-brand-purple animate-spin" />
                             </div>
                         )}
 
-                        {/* Mapping Pesan */}
                         {messages.map((msg, index) => (
                             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
                                 <div className={`
@@ -347,7 +311,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                             </div>
                         ))}
                         
-                        {/* Loading Bubble saat mengirim */}
                         {isSending && (
                             <div className="flex justify-start animate-pulse">
                                 <div className="bg-gray-100 rounded-2xl rounded-bl-none py-3 px-4 border border-gray-200 flex space-x-1 items-center">
@@ -357,10 +320,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                                 </div>
                             </div>
                         )}
-                        <div className="h-4"></div> {/* Spacer bawah */}
+                        <div className="h-4"></div> 
                     </div>
 
-                    {/* Input Area */}
                     <div className="p-4 border-t border-gray-200 bg-white">
                         {error && (
                             <div className="mb-2 p-2 bg-red-50 border border-red-100 rounded text-xs text-red-600 flex justify-between items-center">
@@ -375,7 +337,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
-                                        handleSubmit(e as any);
+                                        handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
                                     }
                                 }}
                                 placeholder="Ketik pesan Anda..."
