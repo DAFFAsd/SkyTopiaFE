@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiLoader, FiDownload, FiFilter, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
+import { FiLoader, FiDownload, FiFilter, FiArrowLeft } from 'react-icons/fi';
 
 interface AttendanceRecord {
   _id: string;

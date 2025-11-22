@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
 
 interface Curriculum {
   _id: string;

@@ -148,9 +148,9 @@ export default function InventoryReceivedPage() {
             } else {
                 setError(data.message || 'Gagal mencatat barang diterima');
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error('Error:', err);
-            setError(err.message || 'Terjadi kesalahan');
+            setError((err as Error).message || 'Terjadi kesalahan');
         } finally {
             setSubmitting(false);
         }
