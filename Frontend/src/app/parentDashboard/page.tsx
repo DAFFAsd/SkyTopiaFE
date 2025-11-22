@@ -8,6 +8,7 @@ import {
     FiMessageSquare, 
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
+import PaymentChart from './components/PaymentChart'; 
 
 type Child = {
     _id: string;
@@ -21,6 +22,8 @@ type User = {
     email: string;
     role: string;
 };
+
+// ... (FeatureCard dan ChildCard components tetap sama)
 
 function FeatureCard({ title, href, icon: Icon, color, iconColor }: 
     { title: string; href: string; icon: IconType; color: string; iconColor: string }) {
@@ -131,7 +134,7 @@ export default function ParentDashboardPage() {
             <div className="relative rounded-xl shadow-sm border border-yellow-200 bg-welcome-yellow p-6 md:p-8 overflow-hidden">
                 <div className="relative z-10 max-w-lg">
                     <h3 className="font-semibold text-2xl md:text-3xl text-brand-purple">
-                        Halo, {user?.name || 'Orang Tua'}! 👋
+                        Halo, {user?.name || 'Orang Tua'}! 
                     </h3>
                     <p className="mt-2 text-sm md:text-base text-brand-purple/90 leading-relaxed">
                         Selamat datang di SkyTopia. Pantau semua aktivitas, laporan, dan perkembangan buah hati Anda di sini.
@@ -169,7 +172,6 @@ export default function ParentDashboardPage() {
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">Fitur Utama</h3>
                 
-                {/* Grid Responsive: 1 kolom (HP), 2 kolom (Tablet), 4 kolom (Laptop Besar) */}
                 <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
                     
                     <FeatureCard
@@ -203,6 +205,17 @@ export default function ParentDashboardPage() {
                     
                 </div>
             </div>
+            
+            {/* 2. AREA PAYMENT CHART BARU */}
+            <div className="pt-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">
+                    Ringkasan Pembayaran Tahunan
+                </h3>
+                <div className="bg-white rounded-xl shadow-md border border-gray-200">
+                    <PaymentChart /> 
+                </div>
+            </div>
+
         </div>
     );
 }
