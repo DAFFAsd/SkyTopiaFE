@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation';
 
 import {
@@ -11,7 +12,6 @@ import {
     FiCalendar,
     FiDollarSign,
     FiArrowLeftCircle,
-    FiPackage,
     FiBarChart,
     FiUsers,
     FiClipboard, 
@@ -39,7 +39,16 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    const logout = async () => {
+    // 2. TAMBAH STATE MODAL
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    // 3. FUNGSI BUKA MODAL
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
+
+    // 4. FUNGSI LOGOUT SEBENARNYA (Dipindah ke sini)
+    const confirmLogout = async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
@@ -56,10 +65,32 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
         } finally {
             localStorage.removeItem('token');
             router.push('/login');
+            setShowLogoutModal(false); // Tutup modal
         }
     };
 
+    // const logout = async () => {
+    //     try {
+    //         const token = localStorage.getItem('token');
+    //         if (token) {
+    //             await fetch('/api/users/logout', {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Authorization': `Bearer ${token}`,
+    //                     'Content-Type': 'application/json'
+    //                 }
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.error('Logout error:', error);
+    //     } finally {
+    //         localStorage.removeItem('token');
+    //         router.push('/login');
+    //     }
+    // };
+
     return (
+    <>
     <aside className="w-64 flex flex-col bg-sidebar-bg border-r border-gray-200  md:flex fixed h-screen px-6 py-6"> 
         
         <div className="mb-6 flex items-center justify-center flex-shrink-0">
@@ -126,7 +157,7 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
             </button>
             
             <button
-                onClick={logout}
+                onClick={handleLogoutClick}
                 className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
             >
             <FiLogOut className="h-5 w-5" />
@@ -137,5 +168,29 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
             </div>
         </div>
     </aside>
+    {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-xl shadow-lg w-80 transform transition-all scale-100">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Konfirmasi Logout</h3>
+                <p className="text-gray-600 mb-6 text-sm">Apakah Anda yakin ingin keluar dari aplikasi?</p>
+                
+                <div className="flex justify-end space-x-3">
+                    <button 
+                        onClick={() => setShowLogoutModal(false)}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        onClick={confirmLogout}
+                        className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                        Ya, Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+        )}
+    </>
     );
 }
