@@ -139,7 +139,14 @@ exports.login = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
     try {
         // Find all users and exclude password field from response
-        const users = await User.find().select('-password');
+        const { role } = req.query;
+        
+        let query = {};
+        if (role) {
+            query.role = role;
+        }
+        
+        const users = await User.find(query).select('-password');
         res.json({ success: true, users });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -335,6 +342,17 @@ exports.getDashboardStats = async (req, res) => {
 
     } catch (err) {
         console.error('Dashboard Stats Error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Logout - Protected route
+exports.logout = async (req, res) => {
+    try {
+        // Untuk JWT stateless, logout cukup di frontend (hapus token)
+        // Jika ada refresh token atau blacklist, implementasikan di sini
+        res.json({ success: true, message: 'Logged out successfully' });
+    } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };

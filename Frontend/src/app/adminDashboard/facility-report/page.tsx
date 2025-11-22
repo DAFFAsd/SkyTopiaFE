@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiLoader, FiChevronDown } from 'react-icons/fi';
+import { FiLoader, FiChevronDown, FiArrowLeft } from 'react-icons/fi';
 
 interface FacilityCondition {
   _id: string;
@@ -106,6 +106,10 @@ export default function FacilityReportPage() {
   if (loading) {
     return (
       <div className="space-y-4">
+        <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+          <FiArrowLeft className="h-4 w-4" />
+          <span>Kembali ke Dasbor</span>
+        </Link>
         <h1 className="text-2xl font-bold text-brand-purple">Laporan Kondisi Fasilitas</h1>
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
@@ -117,17 +121,24 @@ export default function FacilityReportPage() {
   if (error) {
     return (
       <div className="space-y-4">
+        <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+          <FiArrowLeft className="h-4 w-4" />
+          <span>Kembali ke Dasbor</span>
+        </Link>
         <h1 className="text-2xl font-bold text-brand-purple">Laporan Kondisi Fasilitas</h1>
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
-        <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+        <FiArrowLeft className="h-4 w-4" />
+        <span>Kembali ke Dasbor</span>
+      </Link>
       <h1 className="text-2xl font-bold text-brand-purple">Laporan Kondisi Fasilitas</h1>
 
       {conditions.length === 0 ? (
@@ -218,8 +229,6 @@ export default function FacilityReportPage() {
           ))}
         </div>
       )}
-
-      <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
     </div>
   );
 }

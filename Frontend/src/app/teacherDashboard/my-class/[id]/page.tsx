@@ -23,7 +23,6 @@ interface ScheduleCurriculum {
     _id: string;
     title: string;
     description: string;
-    grade: string;
 }
 interface Schedule {
     _id: string;

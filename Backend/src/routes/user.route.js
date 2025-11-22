@@ -10,6 +10,7 @@ router.post('/setup-admin', userController.setupAdmin);
 
 // Protected routes (all authenticated users)
 router.get('/profile', authMiddleware, requireAnyRole, userController.getProfile);
+router.post('/logout', authMiddleware, requireAnyRole, userController.logout);
 
 // Admin only routes
 router.get('/dashboard/stats', authMiddleware, requireAdmin, userController.getDashboardStats);
