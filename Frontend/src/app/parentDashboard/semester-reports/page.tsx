@@ -188,7 +188,7 @@ export default function SemesterReportsPage() {
                     {reportSections.map((section) => (
                         <a 
                         key={section.id}
-                        href={`#${section.id}`}
+                        href={`#${section.id}-${report._id}`}
                         className={`flex items-center space-x-4 rounded-lg p-5 transition-all hover:shadow-lg ${section.bgColor}`}
                         >
                         <div className={`rounded-full p-3 ${section.iconColor} bg-white`}>
@@ -203,17 +203,17 @@ export default function SemesterReportsPage() {
                 </div>
 
                 <div className="divide-y divide-gray-100 border-t border-gray-200">
-                    <ChecklistSection id="religious" title="Nilai Agama dan Moral" data={report.religious_moral} />
-                    <ChecklistSection id="social" title="Sosial Emosional" data={report.social_emotional} />
-                    <ChecklistSection id="cognitive" title="Kognitif" data={report.cognitive} />
-                    <ChecklistSection id="language" title="Bahasa" data={report.language} />
-                    <ChecklistSection id="gross-motor" title="Motorik Kasar" data={report.gross_motor} />
-                    <ChecklistSection id="fine-motor" title="Motorik Halus" data={report.fine_motor} />
-                    <ChecklistSection id="independence" title="Kemandirian" data={report.independence} />
-                    <ChecklistSection id="art" title="Seni" data={report.art} />
+                    <ChecklistSection id={`religious-${report._id}`} title="Nilai Agama dan Moral" data={report.religious_moral} />
+                    <ChecklistSection id={`social-${report._id}`} title="Sosial Emosional" data={report.social_emotional} />
+                    <ChecklistSection id={`cognitive-${report._id}`} title="Kognitif" data={report.cognitive} />
+                    <ChecklistSection id={`language-${report._id}`} title="Bahasa" data={report.language} />
+                    <ChecklistSection id={`gross-motor-${report._id}`} title="Motorik Kasar" data={report.gross_motor} />
+                    <ChecklistSection id={`fine-motor-${report._id}`} title="Motorik Halus" data={report.fine_motor} />
+                    <ChecklistSection id={`independence-${report._id}`} title="Kemandirian" data={report.independence} />
+                    <ChecklistSection id={`art-${report._id}`} title="Seni" data={report.art} />
                     
                     {report.teacher_notes && (
-                    <div id="teacher-notes" className="py-4 scroll-mt-20">
+                    <div id={`teacher-notes-${report._id}`} className="py-4 scroll-mt-20">
                         <h4 className="text-md font-semibold text-brand-purple">Catatan Akhir Guru</h4>
                         <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
                         <p className="text-sm text-gray-600 italic">{report.teacher_notes}</p>

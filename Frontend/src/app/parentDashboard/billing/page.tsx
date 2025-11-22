@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiArrowLeft, FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiXCircle, FiUpload } from 'react-icons/fi';
+import { FiArrowLeft, FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiXCircle, FiUpload, FiFilter } from 'react-icons/fi';
 
 interface Child {
     _id: string;
@@ -29,6 +29,10 @@ export default function BillingPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [uploadingPaymentId, setUploadingPaymentId] = useState<string | null>(null);
+
+    // --- [BARU 1] State untuk Filter ---
+    // Default 'ALL' artinya tampilkan semua
+    const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'PAID' | 'OVERDUE'>('ALL');
 
     useEffect(() => {
         fetchPayments();
@@ -146,8 +150,18 @@ export default function BillingPage() {
     // Calculate statistics
     const totalPending = payments.filter(p => p.status === 'Tertunda' || p.status === 'Terkirim').length;
     const totalPaid = payments.filter(p => p.status === 'Dibayar').length;
-    const totalOverdue = payments.filter(p => p.status === 'Jatuh Tempo').length;
+    const totalOverdue = payments.filter(p => p.status === 'Jatuh Tempo' || p.status === 'Ditolak').length; // Ditambah Ditolak biar masuk kategori merah
     const paidAmount = payments.filter(p => p.status === 'Dibayar').reduce((sum, p) => sum + p.amount, 0);
+
+    // --- [BARU 2] Logika Filter ---
+    // Kita memfilter array 'payments' berdasarkan state 'activeFilter'
+    const filteredPayments = payments.filter(payment => {
+        if (activeFilter === 'ALL') return true;
+        if (activeFilter === 'PENDING') return payment.status === 'Tertunda' || payment.status === 'Terkirim';
+        if (activeFilter === 'PAID') return payment.status === 'Dibayar';
+        if (activeFilter === 'OVERDUE') return payment.status === 'Jatuh Tempo' || payment.status === 'Ditolak';
+        return true;
+    });
 
     return (
     <div className="space-y-6">
@@ -159,9 +173,21 @@ export default function BillingPage() {
             <span>Kembali ke Dasbor</span>
         </Link>
 
-        <h1 className="text-3xl font-bold text-brand-purple">
-            Tagihan & Pembayaran
-        </h1>
+        <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-brand-purple">
+                Tagihan & Pembayaran
+            </h1>
+            
+            {/* Indikator filter aktif (Optional, biar user tau) */}
+            {activeFilter !== 'ALL' && (
+                <button 
+                    onClick={() => setActiveFilter('ALL')}
+                    className="flex items-center text-sm text-gray-500 hover:text-brand-purple"
+                >
+                    <FiXCircle className="mr-1" /> Hapus Filter
+                </button>
+            )}
+        </div>
 
         {error && (
             <div className="rounded-lg bg-red-50 p-4 text-red-700">
@@ -169,58 +195,96 @@ export default function BillingPage() {
             </div>
         )}
 
-        {/* Statistics Cards */}
+        {/* Statistics Cards - SEKARANG JADI TOMBOL FILTER */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="rounded-lg bg-yellow-50 p-6 border-l-4 border-yellow-500">
+            
+            {/* 1. KARTU KUNING (PENDING) */}
+            <div 
+                onClick={() => setActiveFilter('PENDING')}
+                className={`rounded-lg p-6 border-l-4 border-yellow-500 cursor-pointer transition-all transform hover:scale-105 hover:shadow-md
+                    ${activeFilter === 'PENDING' ? 'bg-yellow-100 ring-2 ring-yellow-400' : 'bg-yellow-50'}
+                `}
+            >
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Menunggu</p>
                         <p className="text-2xl font-bold text-brand-purple">{totalPending}</p>
                     </div>
-                    <FiClock className="h-8 w-8 text-yellow-500" />
+                    <FiClock className={`h-8 w-8 ${activeFilter === 'PENDING' ? 'text-yellow-600' : 'text-yellow-500'}`} />
                 </div>
             </div>
 
-            <div className="rounded-lg bg-green-50 p-6 border-l-4 border-green-500">
+            {/* 2. KARTU HIJAU (LUNAS) */}
+            <div 
+                onClick={() => setActiveFilter('PAID')}
+                className={`rounded-lg p-6 border-l-4 border-green-500 cursor-pointer transition-all transform hover:scale-105 hover:shadow-md
+                    ${activeFilter === 'PAID' ? 'bg-green-100 ring-2 ring-green-400' : 'bg-green-50'}
+                `}
+            >
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Lunas</p>
                         <p className="text-2xl font-bold text-brand-purple">{totalPaid}</p>
                     </div>
-                    <FiCheckCircle className="h-8 w-8 text-green-500" />
+                    <FiCheckCircle className={`h-8 w-8 ${activeFilter === 'PAID' ? 'text-green-600' : 'text-green-500'}`} />
                 </div>
             </div>
 
-            <div className="rounded-lg bg-red-50 p-6 border-l-4 border-red-500">
+            {/* 3. KARTU MERAH (TERLAMBAT) */}
+            <div 
+                onClick={() => setActiveFilter('OVERDUE')}
+                className={`rounded-lg p-6 border-l-4 border-red-500 cursor-pointer transition-all transform hover:scale-105 hover:shadow-md
+                    ${activeFilter === 'OVERDUE' ? 'bg-red-100 ring-2 ring-red-400' : 'bg-red-50'}
+                `}
+            >
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-gray-600">Terlambat</p>
+                        <p className="text-sm font-medium text-gray-600">Terlambat / Ditolak</p>
                         <p className="text-2xl font-bold text-brand-purple">{totalOverdue}</p>
                     </div>
-                    <FiAlertCircle className="h-8 w-8 text-red-500" />
+                    <FiAlertCircle className={`h-8 w-8 ${activeFilter === 'OVERDUE' ? 'text-red-600' : 'text-red-500'}`} />
                 </div>
             </div>
 
-            <div className="rounded-lg bg-blue-50 p-6 border-l-4 border-blue-500">
+            {/* 4. KARTU BIRU (RESET / SEMUA) */}
+            <div 
+                onClick={() => setActiveFilter('ALL')}
+                className={`rounded-lg p-6 border-l-4 border-blue-500 cursor-pointer transition-all transform hover:scale-105 hover:shadow-md
+                    ${activeFilter === 'ALL' ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-blue-50'}
+                `}
+            >
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Total Dibayar</p>
                         <p className="text-lg font-bold text-brand-purple">{formatCurrency(paidAmount)}</p>
+                        <p className="text-xs text-gray-500 mt-1">(Klik untuk lihat semua)</p>
                     </div>
-                    <FiDollarSign className="h-8 w-8 text-blue-500" />
+                    <FiDollarSign className={`h-8 w-8 ${activeFilter === 'ALL' ? 'text-blue-600' : 'text-blue-500'}`} />
                 </div>
             </div>
         </div>
 
-        {/* Payments List */}
+        {/* --- [BARU 3] Indikator Judul Filter --- */}
+        <div className="flex items-center space-x-2 text-sm text-gray-500 bg-gray-50 p-2 rounded-md w-fit">
+            <FiFilter />
+            <span>Menampilkan: </span>
+            <span className="font-bold text-brand-purple">
+                {activeFilter === 'ALL' && 'Semua Tagihan'}
+                {activeFilter === 'PENDING' && 'Tagihan Menunggu Pembayaran'}
+                {activeFilter === 'PAID' && 'Tagihan Lunas'}
+                {activeFilter === 'OVERDUE' && 'Tagihan Bermasalah (Terlambat/Ditolak)'}
+            </span>
+        </div>
+
+        {/* Payments List - MENGGUNAKAN filteredPayments */}
         {isLoading ? (
             <div className="rounded-lg bg-white p-8 shadow-sm text-center">
                 <div className="text-gray-600">Memuat data pembayaran...</div>
             </div>
-        ) : payments.length > 0 ? (
+        ) : filteredPayments.length > 0 ? (
             <div className="space-y-4">
-                {payments.map((payment) => (
-                    <div key={payment._id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
+                {filteredPayments.map((payment) => (
+                    <div key={payment._id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-200 animate-fade-in">
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
                                 <div className="flex items-center space-x-3 mb-3">
@@ -270,8 +334,6 @@ export default function BillingPage() {
                                 )}
                             </div>
 
-                            {/* --- INI DIA KUNCINYA --- */}
-                            {/* Tambahin 'payment.status === 'Jatuh Tempo'' */}
                             {(payment.status === 'Tertunda' || payment.status === 'Ditolak' || payment.status === 'Jatuh Tempo') && (
                                 <div className="ml-4 flex-shrink-0 mt-4 md:mt-0">
                                     <label
@@ -315,10 +377,18 @@ export default function BillingPage() {
         ) : (
             <div className="rounded-lg bg-white p-8 shadow-sm text-center">
                 <p className="text-gray-600">
-                    Belum ada data pembayaran.
+                    {/* Pesan kosongnya disesuaikan dengan filter */}
+                    {activeFilter === 'ALL' 
+                        ? 'Belum ada data pembayaran.' 
+                        : 'Tidak ada tagihan untuk kategori ini.'}
                 </p>
+                {activeFilter !== 'ALL' && (
+                    <button onClick={() => setActiveFilter('ALL')} className="mt-2 text-brand-purple underline text-sm">
+                        Tampilkan semua data
+                    </button>
+                )}
             </div>
         )}
     </div>
-);
+    );
 }
