@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react'; // Tambah useEffect
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiX, FiFileText } from 'react-icons/fi';
 
@@ -13,27 +12,22 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
-    // STATE BARU: Untuk checkbox 'Ingat Saya'
     const [rememberMe, setRememberMe] = useState(false);
-
-    // STATE MODAL: Untuk Ketentuan Layanan
     const [showTermsModal, setShowTermsModal] = useState(false);
 
     const router = useRouter();
 
-    // --- [LOGIKA REMEMBER ME] ---
-    // Efek ini jalan pas pertama kali halaman dibuka
     useEffect(() => {
         const savedEmail = localStorage.getItem('savedEmail');
         const savedPassword = localStorage.getItem('savedPassword');
         
         if (savedEmail) {
             setEmail(savedEmail);
-            setRememberMe(true); // Otomatis centang jika ada data tersimpan
+            setRememberMe(true); 
         }
         
         if (savedPassword) {
-            setPassword(savedPassword); // Isi password otomatis
+            setPassword(savedPassword); 
         }
     }, []);
 
@@ -42,10 +36,9 @@ export default function LoginPage() {
         setIsLoading(true);
         setError(null);
 
-        // --- [SIMPAN / HAPUS DATA REMEMBER ME] ---
         if (rememberMe) {
             localStorage.setItem('savedEmail', email);
-            localStorage.setItem('savedPassword', password); // Menyimpan password
+            localStorage.setItem('savedPassword', password); 
         } else {
             localStorage.removeItem('savedEmail');
             localStorage.removeItem('savedPassword');
@@ -104,6 +97,8 @@ export default function LoginPage() {
 
     return (
         <div className="flex min-h-screen">
+        
+        {/* --- LEFT PANEL (DESKTOP ONLY) --- */}
         <div className="hidden pb-0 md:flex md:w-6/12 flex-col justify-center items-center bg-new-sky-blue p-12 text-brand-purple relative">
             <div className="absolute top-12 left-20">
             <Image
@@ -133,8 +128,12 @@ export default function LoginPage() {
             </div>
         </div>
 
-        <div className="w-full md:w-7/12 flex justify-center items-center bg-white p-8 relative">
-            <div className="w-full max-w-md rounded-2xl border border-form-stroke/15 p-10 shadow-xl">
+        {/* --- RIGHT PANEL (FORM) --- */}
+        {/* UBAH DISINI: Tambah flex-col, bg-new-sky-blue (mobile), md:bg-white (desktop) */}
+        <div className="w-full md:w-7/12 flex flex-col justify-center items-center bg-new-sky-blue md:bg-white p-8 relative">
+            
+            {/* Tambah bg-white di sini supaya kotaknya putih saat background mobile jadi biru */}
+            <div className="w-full max-w-md rounded-2xl bg-white border border-form-stroke/15 p-10 shadow-xl z-10">
             <div className="flex justify-center mb-8">
                 <Image
                 src="/skytopia-logo.svg"
@@ -164,7 +163,6 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    // Autocomplete membantu browser menyarankan email yg tersimpan
                     autoComplete="username" 
                     className="block w-full rounded-lg border-form-stroke pl-10 shadow-sm transition-colors duration-150 group-hover:border-login-pink-focus focus:border-login-pink-focus focus:ring-2 focus:ring-login-pink-focus"
                     />
@@ -190,7 +188,6 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    // Autocomplete membantu browser mengisi password
                     autoComplete="current-password"
                     className="block w-full rounded-lg border-form-stroke pl-10 shadow-sm transition-colors duration-150 group-hover:border-login-pink-focus focus:border-login-pink-focus focus:ring-2 focus:ring-login-pink-focus"
                     />
@@ -218,7 +215,6 @@ export default function LoginPage() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    // MENGHUBUNGKAN CHECKBOX DENGAN STATE
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 rounded border-gray-300 text-login-pink focus:ring-login-pink"
@@ -259,6 +255,18 @@ export default function LoginPage() {
                 </button>
                 </p>
             </form>
+            </div>
+
+            {/* --- GAMBAR UNTUK MOBILE (BAWAH FORM) --- */}
+            {/* Class 'block md:hidden' artinya muncul di mobile, hilang di desktop */}
+            <div className="mt-8 block md:hidden animate-fade-in-up">
+                <Image
+                    src="/children.svg"
+                    alt="Ilustrasi Anak-anak"
+                    width={280}
+                    height={180}
+                    className="opacity-90"
+                />
             </div>
 
             {/* --- MODAL KETENTUAN LAYANAN --- */}
