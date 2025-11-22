@@ -27,12 +27,12 @@ function FeatureCard({ title, href, icon: Icon, color, iconColor }:
     return (
         <Link
         href={href}
-        className={`flex h-32 items-center space-x-4 rounded-xl p-6 transition-transform hover:scale-105 ${color}`}
+        className={`flex h-28 md:h-32 items-center space-x-4 rounded-xl p-5 md:p-6 transition-transform hover:scale-105 shadow-sm hover:shadow-md ${color}`}
         >
-            <div className={`rounded-full bg-white p-3`}>
+            <div className={`rounded-full bg-white p-3 flex-shrink-0`}>
                 <Icon className={`h-6 w-6 ${iconColor}`} />
             </div>
-            <span className="text-lg font-semibold text-brand-purple">{title}</span>
+            <span className="text-base md:text-lg font-semibold text-brand-purple leading-tight">{title}</span>
         </Link>
     );
 }
@@ -41,12 +41,12 @@ function ChildCard({ name, href }: { name: string; href: string }) {
     return (
         <Link
         href={href}
-        className="flex h-32 items-center space-x-4 rounded-xl bg-stat-blue-bg/50 p-6 transition-transform hover:scale-105"
+        className="flex h-28 md:h-32 items-center space-x-4 rounded-xl bg-stat-blue-bg/50 p-5 md:p-6 transition-transform hover:scale-105 shadow-sm hover:shadow-md"
         >
-            <div className="rounded-full bg-white p-3">
+            <div className="rounded-full bg-white p-3 flex-shrink-0">
                 <FiUsers className="h-6 w-6 text-sky-500" />
             </div>
-            <div className="text-xl font-semibold text-brand-purple">{name}</div>
+            <div className="text-lg md:text-xl font-semibold text-brand-purple truncate">{name}</div>
         </Link>
     );
 }
@@ -110,38 +110,47 @@ export default function ParentDashboardPage() {
     }, []);
 
     if (isLoading) {
-        return <div className="text-center text-gray-500 p-10">Memuat data...</div>;
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-purple"></div>
+                <span className="ml-2 text-gray-500">Memuat data...</span>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="text-center text-red-500 p-10">Error: {error}</div>;
+        return (
+            <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200 text-center">
+                Error: {error}
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-8">
-            <div className="relative rounded-xl shadow-sm border border-yellow-200 bg-welcome-yellow p-8 overflow-hidden">
-                <div className="max-w-md">
-                    <h3 className="font-semibold text-3xl text-brand-purple">
-                        Halo, {user?.name || 'Orang Tua'}!
+        <div className="space-y-8 pb-10">
+            <div className="relative rounded-xl shadow-sm border border-yellow-200 bg-welcome-yellow p-6 md:p-8 overflow-hidden">
+                <div className="relative z-10 max-w-lg">
+                    <h3 className="font-semibold text-2xl md:text-3xl text-brand-purple">
+                        Halo, {user?.name || 'Orang Tua'}! 👋
                     </h3>
-                    <p className="mt-2 text-brand-purple/90">
-                        Selamat datang di SkyTopia. Pantau semua aktivitas buah hati Anda di sini.
+                    <p className="mt-2 text-sm md:text-base text-brand-purple/90 leading-relaxed">
+                        Selamat datang di SkyTopia. Pantau semua aktivitas, laporan, dan perkembangan buah hati Anda di sini.
                     </p>
                 </div>
-                <div className="absolute right-10 -bottom-8 hidden lg:block opacity-80">
+                <div className="absolute right-4 -bottom-4 hidden md:block opacity-90 hover:scale-105 transition-transform">
                     <Image
                         src="/woman-at-desk.svg"
                         alt="Ilustrasi"
-                        width={200}
-                        height={130}
+                        width={180}
+                        height={120}
                     />
                 </div>
             </div>
 
-            <div>
-                <h3 className="font-rammetto text-2xl font-bold text-brand-purple mb-4">Anak Anda</h3>
+            <div className="animate-fade-in-up">
+                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">Anak Anda</h3>
                 {children.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {children.map((child) => (
                     <ChildCard
                         key={child._id}
@@ -151,13 +160,17 @@ export default function ParentDashboardPage() {
                     ))}
                 </div>
                 ) : (
-                <p className="text-gray-500">Belum ada data anak.</p>
+                <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <p className="text-gray-500">Belum ada data anak yang terdaftar.</p>
+                </div>
                 )}
             </div>
 
-            <div>
-                <h3 className="font-rammetto text-2xl font-bold text-brand-purple mb-4">Fitur Utama</h3>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">Fitur Utama</h3>
+                
+                {/* Grid Responsive: 1 kolom (HP), 2 kolom (Tablet), 4 kolom (Laptop Besar) */}
+                <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
                     
                     <FeatureCard
                         title="Laporan Harian"
@@ -174,7 +187,7 @@ export default function ParentDashboardPage() {
                         iconColor="text-sky-500"
                     />
                     <FeatureCard
-                        title="Tagihan & Pembayaran"
+                        title="Tagihan"
                         href="/parentDashboard/billing"
                         icon={FiDollarSign}
                         color="bg-stat-pink-bg"
