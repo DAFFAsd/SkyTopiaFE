@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { FiUsers, FiDatabase, FiCalendar, FiClipboard, FiBarChart } from 'react-icons/fi';
+import { IconType } from 'react-icons';
 
-function AdminTile({ title, icon: Icon, color = 'bg-pink-100', href }: { title: string; icon: any; color?: string; href?: string }) {
+function AdminTile({ title, icon: Icon, color = 'bg-pink-100', href }: { title: string; icon: IconType; color?: string; href?: string }) {
 	const tile = (
 		<div className={`tile-card flex flex-col justify-center items-start space-y-3 rounded-lg p-6 ${color} h-36 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:shadow-md`}>
 			<div className="rounded-full p-3 bg-white text-2xl">
