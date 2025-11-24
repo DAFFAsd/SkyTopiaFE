@@ -21,13 +21,12 @@ import {
 
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
-    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiFileText }, // Menggunakan FiFileText untuk User/Data
+    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiFileText },
     { name: 'Data Anak', href: '/adminDashboard/children', icon: FiUsers },
     { name: 'Laporan Harian', href: '/adminDashboard/daily-reports', icon: FiClipboard },
-    { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
-    { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCalendar },
-    { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
-    { name: 'Kurikulum dan Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
+    { name: 'Manajemen Guru', href: '/adminDashboard/teacher-management', icon: FiUser },
+    { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
+    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
 ];
 
