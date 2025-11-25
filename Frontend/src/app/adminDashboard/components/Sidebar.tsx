@@ -21,12 +21,11 @@ import {
 
 const navLinks = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
-    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiFileText }, // Menggunakan FiFileText untuk User/Data
+    { name: 'Manajemen Pengguna', href: '/adminDashboard/users', icon: FiFileText }, // Menggunakan FiFileText untuk User/Data
     { name: 'Data Anak', href: '/adminDashboard/children', icon: FiUsers },
     { name: 'Laporan Harian', href: '/adminDashboard/daily-reports', icon: FiClipboard },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiUser },
     { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCalendar },
-    { name: 'Kalender', href: '/adminDashboard/calendar', icon: FiCalendar },
     { name: 'Kurikulum dan Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
 ];
@@ -39,15 +38,12 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    // 2. TAMBAH STATE MODAL
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // 3. FUNGSI BUKA MODAL
     const handleLogoutClick = () => {
         setShowLogoutModal(true);
     };
 
-    // 4. FUNGSI LOGOUT SEBENARNYA (Dipindah ke sini)
     const confirmLogout = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -65,29 +61,9 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
         } finally {
             localStorage.removeItem('token');
             router.push('/login');
-            setShowLogoutModal(false); // Tutup modal
+            setShowLogoutModal(false); 
         }
     };
-
-    // const logout = async () => {
-    //     try {
-    //         const token = localStorage.getItem('token');
-    //         if (token) {
-    //             await fetch('/api/users/logout', {
-    //                 method: 'POST',
-    //                 headers: {
-    //                     'Authorization': `Bearer ${token}`,
-    //                     'Content-Type': 'application/json'
-    //                 }
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Logout error:', error);
-    //     } finally {
-    //         localStorage.removeItem('token');
-    //         router.push('/login');
-    //     }
-    // };
 
     return (
     <>
