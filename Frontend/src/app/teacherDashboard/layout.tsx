@@ -1,4 +1,3 @@
-// Import Image, FiSearch, dan FiBell udah dihapus
 'use client';
 
 import { useState } from 'react';
@@ -18,9 +17,6 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 {!sidebarHidden && <TeacherSidebar onToggle={toggleSidebar} />}
             </div>
 
-            {/* DIV pembungkus <header> dan <main> udah dihapus.
-                <main> sekarang jadi anak langsung dari <div flex ...>
-            */}
             <main className="flex-1 overflow-y-auto p-8 relative">
                 {sidebarHidden && (
                     <button

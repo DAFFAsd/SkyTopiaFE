@@ -19,7 +19,8 @@ interface DashboardStats {
 function DashboardCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-shadow">
-            <h2 className="font-rammetto text-xl text-brand-purple mb-4 pb-2 border-b-2 border-login-pink/20">
+            {/* Updated title to match Ringkasan Statistik: font-rammetto text-lg text-brand-purple mb-4 */}
+            <h2 className="font-rammetto text-lg text-brand-purple mb-4 pb-2 border-b-2 border-login-pink/20">
                 {title}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -84,19 +85,19 @@ function StatCard({
     iconColor: string; 
 }) {
     return (
-        <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3">
+        <div className="bg-white rounded-lg p-2.5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow h-full">
+            <div className="flex items-center space-x-2.5">
                 {/* Left: Icon */}
-                <div className={`flex-shrink-0 ${iconBgColor} rounded-full p-2`}>
-                    <Icon className={`h-6 w-6 ${iconColor}`} />
+                <div className={`flex-shrink-0 ${iconBgColor} rounded-full p-1.5`}>
+                    <Icon className={`h-4 w-4 ${iconColor}`} />
                 </div>
                 
                 {/* Right: Value and Label */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-brand-purple">
+                    <p className="text-xl font-bold text-brand-purple leading-tight">
                         {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
                     </p>
-                    <p className="text-sm text-gray-600 mt-0.5">{label}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">{label}</p>
                 </div>
             </div>
         </div>
@@ -393,7 +394,7 @@ export default function DashboardAdminPage() {
                         <p className="text-sm text-gray-600 mt-2">Memuat data statistik...</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         <StatCard
                             icon={FiUsers}
                             value={stats.totalChildren}
@@ -432,7 +433,7 @@ export default function DashboardAdminPage() {
                         <StatCard
                             icon={FiPackage}
                             value={stats.pendingRequests}
-                            label="Permintaan Menunggu"
+                            label="Permintaan Inventaris"
                             iconBgColor="bg-red-100"
                             iconColor="text-red-600"
                         />

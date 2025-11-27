@@ -4,25 +4,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  FaRocket, 
+import {  
   FaBolt, 
   FaShieldAlt, 
   FaUsers,
   FaChild,
   FaMoneyBillWave,
-  FaClipboardList,
   FaRobot,
-  FaCheckCircle,
-  FaUserFriends,
-  FaChalkboardTeacher,
-  FaCalendarAlt,
   FaDatabase,
   FaTools,
   FaClipboardCheck,
-  FaHistory,
   FaComments,
-  FaUserShield,
   FaPhone,
   FaEnvelope,
   FaBars,

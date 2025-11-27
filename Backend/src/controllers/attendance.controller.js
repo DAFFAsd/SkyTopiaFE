@@ -8,6 +8,11 @@ exports.markAttendance = async (req, res) => {
         date.setHours(0,0,0,0);
 
         const payload = { teacher: teacherId, date, status: req.body.status || 'Present', note: req.body.note };
+        
+        // Add proof image if provided
+        if (req.body.proofImage) {
+            payload.proofImage = req.body.proofImage;
+        }
 
         const attendance = await TeacherAttendance.findOneAndUpdate(
             { teacher: teacherId, date },

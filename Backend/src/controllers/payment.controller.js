@@ -1,6 +1,7 @@
 const Payment = require('../models/payment.model');
 const Child = require('../models/child.model');
 const { calculateManualDueDate, checkAndUpdateOverdue } = require('../tasks/scheduler');
+const cloudinary = require('../config/cloudinary');
 
 // Create new payment - Admin only (manual creation)
 exports.createPayment = async (req, res) => {
@@ -201,10 +202,10 @@ exports.getPaymentById = async (req, res) => {
 
 // Submit proof of payment - Parent only (for their own child)
 exports.submitProofOfPayment = async (req, res) => {
-    try {
+    try {     
         // Check if file was uploaded
         if (!req.file) {
-            return res.status(400).json({ success: false, message: "Proof of payment file is required" });
+            return res.status(400).json({ success: false, message: "Proof of payment image is required" });
         }
 
         // Find payment first
@@ -230,10 +231,18 @@ exports.submitProofOfPayment = async (req, res) => {
             }
         }
 
-        // Get cloudinary URL from uploaded file
-        const proof_of_payment_url = req.file.path;
+        // Manual upload to Cloudinary
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        
+        const uploadResult = await cloudinary.uploader.upload(dataURI, {
+            folder: "proof-of-payments",
+            resource_type: "image"
+        });
 
-        // Update payment with proof and change status to Submitted
+        const proof_of_payment_url = uploadResult.secure_url;
+
+        // Update payment dengan proof dan change status to Submitted
         const updatedPayment = await Payment.findByIdAndUpdate(
             req.params.id,
             {
@@ -246,7 +255,7 @@ exports.submitProofOfPayment = async (req, res) => {
         res.json({
             success: true,
             message: "Proof of payment submitted successfully",
-            payment: updatedPayment
+            payment: updatedPayment 
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

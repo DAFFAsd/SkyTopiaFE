@@ -1,5 +1,3 @@
-// app/layout.tsx
-
 import type { Metadata } from 'next';
 import { Poppins, Rammetto_One } from 'next/font/google';
 import './globals.css';

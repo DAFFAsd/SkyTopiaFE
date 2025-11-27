@@ -57,7 +57,7 @@ exports.getAllChildren = async (req, res) => {
                 path: 'schedules',
                 select: 'title day startTime endTime teacher location curriculum',
                 populate: [
-                    { path: 'teacher', select: 'name' },
+                    { path: 'teacher', select: 'name _id' },
                     { path: 'curriculum', select: 'title' }
                 ]
             });

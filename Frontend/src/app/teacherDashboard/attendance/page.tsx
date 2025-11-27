@@ -1,14 +1,15 @@
 "use client";
 
 import Link from 'next/link';
-import { FiArrowLeft } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { FiArrowLeft, FiCamera, FiX } from 'react-icons/fi';
+import { useState, useEffect, useRef } from 'react';
 
 interface Attendance {
     _id: string;
     date: string;
     status: 'Present' | 'Absent' | 'Leave';
     note: string;
+    proofImage?: string;
 }
 
 export default function AttendancePage() {
@@ -18,6 +19,9 @@ export default function AttendancePage() {
     const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [images, setImages] = useState<File[]>([]);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchAttendanceHistory();
@@ -35,12 +39,64 @@ export default function AttendancePage() {
         }
     };
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            setImages(prev => [...prev, ...files]);
+            
+            // Create preview URLs for the new images
+            const newImageUrls = files.map(file => URL.createObjectURL(file));
+            setImageUrls(prev => [...prev, ...newImageUrls]);
+        }
+    };
+
+    const removeImage = (index: number) => {
+        const newImages = [...images];
+        const newImageUrls = [...imageUrls];
+        
+        // Revoke the object URL to avoid memory leaks
+        URL.revokeObjectURL(newImageUrls[index]);
+        
+        newImages.splice(index, 1);
+        newImageUrls.splice(index, 1);
+        
+        setImages(newImages);
+        setImageUrls(newImageUrls);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setMessage({ type: '', text: '' });
 
+        // Validate proof image for Leave status
+        if (status === 'Leave' && images.length === 0) {
+            setMessage({ type: 'error', text: 'Untuk status Izin, wajib melampirkan bukti izin' });
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
+            let proofImageUrl = '';
+
+            // Upload image if provided
+            if (images.length > 0) {
+                const formData = new FormData();
+                formData.append('image', images[0]); // Only one image for attendance
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const uploadData = await uploadResponse.json();
+                if (uploadData.success) {
+                    proofImageUrl = uploadData.url;
+                } else {
+                    setMessage({ type: 'error', text: 'Gagal upload bukti' });
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
             const response = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: {
@@ -50,6 +106,7 @@ export default function AttendancePage() {
                     date,
                     status,
                     note,
+                    proofImage: proofImageUrl,
                 }),
             });
 
@@ -58,6 +115,8 @@ export default function AttendancePage() {
             if (data.success) {
                 setMessage({ type: 'success', text: 'Absensi berhasil dicatat!' });
                 setNote('');
+                setImages([]);
+                setImageUrls([]);
                 fetchAttendanceHistory();
             } else {
                 setMessage({ type: 'error', text: data.message || 'Terjadi kesalahan' });
@@ -124,6 +183,51 @@ export default function AttendancePage() {
                         />
                     </div>
 
+                    {status === 'Leave' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Bukti Izin <span className="text-red-500">*</span>
+                            </label>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {imageUrls.map((url, index) => (
+                                    <div key={index} className="relative">
+                                        <img
+                                            src={url}
+                                            alt={`Bukti izin ${index + 1}`}
+                                            className="h-24 w-24 rounded-lg object-cover border border-gray-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                                        >
+                                            <FiX className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {images.length === 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-600 hover:border-brand-purple hover:text-brand-purple"
+                                    >
+                                        <FiCamera className="h-6 w-6" />
+                                    </button>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Upload foto bukti izin (surat dokter, dll)
+                            </p>
+                        </div>
+                    )}
+
                     {message.text && (
                         <div className={`rounded-md p-4 ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                             {message.text}
@@ -149,6 +253,7 @@ export default function AttendancePage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tanggal</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Catatan</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Bukti</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -168,11 +273,23 @@ export default function AttendancePage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{record.note || '-'}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                        {record.proofImage ? (
+                                            <img
+                                                src={record.proofImage}
+                                                alt="Bukti izin"
+                                                className="h-12 w-12 rounded-lg object-cover cursor-pointer"
+                                                onClick={() => window.open(record.proofImage, '_blank')}
+                                            />
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                             {attendanceHistory.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
                                         Tidak ada riwayat absensi
                                     </td>
                                 </tr>
