@@ -104,6 +104,7 @@ function StatCard({
 }
 
 export default function DashboardAdminPage() {
+    const API = '/api';
     const [stats, setStats] = useState<DashboardStats>({
         totalChildren: 0,
         totalTeachers: 0,
@@ -118,6 +119,41 @@ export default function DashboardAdminPage() {
     useEffect(() => {
         fetchDashboardStats();
     }, []);
+
+    const isToday = (dateInput: any) => {
+        if (!dateInput) return false;
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return false;
+        const start = new Date(); start.setHours(0, 0, 0, 0);
+        const end = new Date(start); end.setDate(end.getDate() + 1);
+        return d >= start && d < end;
+    };
+
+    const toArray = (data: any, keys: string[]): any[] => {
+        if (Array.isArray(data)) return data;
+        for (const k of keys) {
+            if (data && Array.isArray(data[k])) return data[k];
+        }
+        return [];
+    };
+
+    const fetchJson = async (url: string, headers: Record<string, string>) => {
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`Failed request: ${url}`);
+        return res.json();
+    };
+
+    const fetchJsonWithFallback = async (urls: string[], headers: Record<string, string>) => {
+        for (const url of urls) {
+            try {
+                const res = await fetch(url, { headers });
+                if (res.ok) return await res.json();
+            } catch {
+                // try next
+            }
+        }
+        return { data: [] };
+    };
 
     const fetchDashboardStats = async () => {
         setLoading(true);
@@ -136,7 +172,7 @@ export default function DashboardAdminPage() {
 
             // Try to fetch from backend endpoint first
             try {
-                const response = await fetch('http://localhost:3000/api/users/dashboard/stats', { 
+                const response = await fetch(`${API}/users/dashboard/stats`, { 
                     headers 
                 });
                 
@@ -165,17 +201,13 @@ export default function DashboardAdminPage() {
 
                         // Fetch pending requests separately (not included in dashboard stats)
                         try {
-                            const reqRes = await fetch('http://localhost:3000/api/inventory/requests', { headers });
-                            if (reqRes.ok) {
-                                const reqData = await reqRes.json();
-                                let requestsArray = [];
-                                if (Array.isArray(reqData)) requestsArray = reqData;
-                                else if (Array.isArray(reqData.requests)) requestsArray = reqData.requests;
-                                else if (Array.isArray(reqData.data)) requestsArray = reqData.data;
-
-                                const pendingRequests = requestsArray.filter((r: any) => r && (r.status === 'Pending' || r.status === 'pending')).length;
-                                setStats(prev => ({ ...prev, pendingRequests }));
-                            }
+                            const requestsData = await fetchJsonWithFallback([
+                                `${API}/inventory-requests`,
+                                `${API}/inventory/requests`
+                            ], headers);
+                            const requestsArray = toArray(requestsData, ['requests', 'data']);
+                            const pendingRequests = requestsArray.filter((r: any) => r && (r.status === 'Pending' || r.status === 'pending')).length;
+                            setStats(prev => ({ ...prev, pendingRequests }));
                         } catch (e) {
                             console.warn('Failed to fetch inventory requests for pending count');
                         }
@@ -188,31 +220,36 @@ export default function DashboardAdminPage() {
                 console.log('Dashboard stats endpoint not available, fetching individual endpoints...');
             }
 
-            // Fallback: Fetch from individual endpoints
-            const [childrenRes, usersRes, requestsRes] = await Promise.all([
-                fetch('http://localhost:3000/api/children', { headers }),
-                fetch('http://localhost:3000/api/users', { headers }),
-                fetch('http://localhost:3000/api/inventory/requests', { headers })
+            // Fallback: Fetch from individual endpoints concurrently with resilience
+            const results = await Promise.allSettled([
+                fetch(`${API}/children`, { headers }),
+                fetch(`${API}/users`, { headers }),
+                fetchJsonWithFallback([
+                    `${API}/inventory-requests`,
+                    `${API}/inventory/requests`
+                ], headers),
+                fetch(`${API}/daily-reports`, { headers })
             ]);
 
-            // Attempt consolidated reports endpoint, fallback to daily-reports if not available
-            let reportsData: any = null;
-            let reportsRes = await fetch('http://localhost:3000/api/reports', { headers });
-            if (!reportsRes.ok) {
-                // Fallback to daily-reports
-                reportsRes = await fetch('http://localhost:3000/api/daily-reports', { headers });
-            }
+            const [childrenResSet, usersResSet, requestsDataSet, reportsResSet] = results;
 
-            // Check response status
-            if (!childrenRes.ok) throw new Error('Failed to fetch children data');
-            if (!usersRes.ok) throw new Error('Failed to fetch users data');
-            if (!reportsRes.ok) throw new Error('Failed to fetch reports data');
-            if (!requestsRes.ok) throw new Error('Failed to fetch requests data');
+            const getOkResponse = (resSet: PromiseSettledResult<Response>) => {
+                if (resSet.status === 'fulfilled' && resSet.value && (resSet.value as any).ok) return resSet.value as Response;
+                return null;
+            };
 
-            const childrenData = await childrenRes.json();
-            const usersData = await usersRes.json();
-            reportsData = await reportsRes.json();
-            const requestsData = await requestsRes.json();
+            const childrenResOk = getOkResponse(childrenResSet as PromiseSettledResult<Response>);
+            const usersResOk = getOkResponse(usersResSet as PromiseSettledResult<Response>);
+            const reportsResOk = getOkResponse(reportsResSet as PromiseSettledResult<Response>);
+
+            const readJsonSafe = async (res: Response | null) => {
+                try { return res ? await res.json() : null; } catch { return null; }
+            };
+
+            const childrenData = await readJsonSafe(childrenResOk);
+            const usersData = await readJsonSafe(usersResOk);
+            const reportsData = await readJsonSafe(reportsResOk);
+            const requestsData = (requestsDataSet.status === 'fulfilled') ? (requestsDataSet.value as any) : null;
 
             console.log('Children Data:', childrenData);
             console.log('Users Data:', usersData);
@@ -220,23 +257,23 @@ export default function DashboardAdminPage() {
             console.log('Requests Data:', requestsData);
 
             // Calculate statistics - handle different response formats
-            let childrenArray = [];
+            let childrenArray = [] as any[];
             if (Array.isArray(childrenData)) {
                 childrenArray = childrenData;
-            } else if (childrenData.children && Array.isArray(childrenData.children)) {
+            } else if (childrenData?.children && Array.isArray(childrenData.children)) {
                 childrenArray = childrenData.children;
-            } else if (childrenData.data && Array.isArray(childrenData.data)) {
+            } else if (childrenData?.data && Array.isArray(childrenData.data)) {
                 childrenArray = childrenData.data;
             }
             const totalChildren = childrenArray.length;
 
             // Get users array
-            let usersArray = [];
+            let usersArray = [] as any[];
             if (Array.isArray(usersData)) {
                 usersArray = usersData;
-            } else if (usersData.users && Array.isArray(usersData.users)) {
+            } else if (usersData?.users && Array.isArray(usersData.users)) {
                 usersArray = usersData.users;
-            } else if (usersData.data && Array.isArray(usersData.data)) {
+            } else if (usersData?.data && Array.isArray(usersData.data)) {
                 usersArray = usersData.data;
             }
             // Count users by role
@@ -245,12 +282,12 @@ export default function DashboardAdminPage() {
             const totalUsers = usersArray.length;
             
             // Get reports array and count today's reports (from consolidated or daily endpoint)
-            let reportsArray = [];
+            let reportsArray = [] as any[];
             if (Array.isArray(reportsData)) {
                 reportsArray = reportsData;
-            } else if (reportsData.reports && Array.isArray(reportsData.reports)) {
+            } else if (reportsData?.reports && Array.isArray(reportsData.reports)) {
                 reportsArray = reportsData.reports;
-            } else if (reportsData.data && Array.isArray(reportsData.data)) {
+            } else if (reportsData?.data && Array.isArray(reportsData.data)) {
                 reportsArray = reportsData.data;
             }
 
@@ -266,17 +303,23 @@ export default function DashboardAdminPage() {
             }).length;
 
             // Get requests array and count pending requests
-            let requestsArray = [];
+            let requestsArray = [] as any[];
             if (Array.isArray(requestsData)) {
                 requestsArray = requestsData;
-            } else if (requestsData.requests && Array.isArray(requestsData.requests)) {
+            } else if (requestsData?.requests && Array.isArray(requestsData.requests)) {
                 requestsArray = requestsData.requests;
-            } else if (requestsData.data && Array.isArray(requestsData.data)) {
+            } else if (requestsData?.data && Array.isArray(requestsData.data)) {
                 requestsArray = requestsData.data;
             }
             const pendingRequests = requestsArray.filter((req: any) => 
                 req && (req.status === 'Pending' || req.status === 'pending')
             ).length;
+
+            const hadForbidden = [childrenResSet, usersResSet, reportsResSet]
+                .some(r => (r as any)?.status === 'fulfilled' && (r as any)?.value && !(r as any).value.ok && (r as any).value.status === 403);
+            if (hadForbidden) {
+                setError(prev => prev ?? 'Beberapa data tidak dapat diakses (403). Menampilkan statistik parsial.');
+            }
 
             console.log('Calculated Stats:', {
                 totalChildren,
@@ -350,7 +393,7 @@ export default function DashboardAdminPage() {
                         <p className="text-sm text-gray-600 mt-2">Memuat data statistik...</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                         <StatCard
                             icon={FiUsers}
                             value={stats.totalChildren}
@@ -459,7 +502,7 @@ export default function DashboardAdminPage() {
                         title="Semua Laporan"
                         href="/adminDashboard/reports"
                         icon={FiFileText}
-                        description="Laporan Harian dan semester."
+                        description="Pantau aktivitas, perkembangan, dan kebahagiaan anak, termasuk laporan harian & semester."
                         variant="pink"
                     />
                 </DashboardCard>
