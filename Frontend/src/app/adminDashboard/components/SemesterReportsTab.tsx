@@ -1,8 +1,8 @@
 // Semester Reports Tab Component
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiX, FiDownload, FiEye } from 'react-icons/fi';
+import { useCallback, useState, useEffect } from 'react';
+import { FiSearch, FiFilter, FiX, FiEye } from 'react-icons/fi';
 import { SemesterReport } from '../types/report.types';
 import { Child } from '../types/child.types';
 
@@ -28,11 +28,7 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
         setFilteredReports(reports);
     }, [reports]);
 
-    useEffect(() => {
-        applyFilters();
-    }, [selectedChildId, selectedSemester, selectedYear, searchQuery, reports]);
-
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
         let filtered = [...reports];
 
         // Filter by child
@@ -63,7 +59,13 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
 
         setFilteredReports(filtered);
         setCurrentPage(1);
-    };
+
+    }, [reports, selectedChildId, selectedYear, selectedSemester, searchQuery]); // <--- INI YANG KURANG TADI
+
+    // useEffect jadi bersih begini:
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const clearFilters = () => {
         setSelectedChildId('');
@@ -317,14 +319,6 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
                             <p className="text-gray-600 mb-4">
                                 Guru: <span className="font-medium">{selectedReport.teacher_id.name}</span>
                             </p>
-                            
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                                <p className="text-sm text-yellow-800">
-                                    <strong>Catatan:</strong> Detail lengkap laporan semester berisi penilaian komprehensif 
-                                    terhadap berbagai aspek perkembangan anak. Untuk melihat detail lengkap setiap kategori 
-                                    penilaian, silakan gunakan fitur lihat detail atau download PDF.
-                                </p>
-                            </div>
 
                             <div className="space-y-4">
                                 {selectedReport.religious_moral && (
