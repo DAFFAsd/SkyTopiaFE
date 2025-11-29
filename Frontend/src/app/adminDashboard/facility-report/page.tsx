@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { FiLoader, FiChevronDown, FiArrowLeft } from 'react-icons/fi';
 
 interface FacilityCondition {
@@ -215,11 +216,14 @@ export default function FacilityReportPage() {
                   <span className="text-sm font-medium text-gray-700">Gambar:</span>
                   <div className="flex space-x-2 mt-2">
                     {condition.images.map((image, index) => (
-                      <img
+                      <Image
                         key={index}
                         src={`http://localhost:3000/${image}`}
                         alt={`Condition ${index + 1}`}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 object-cover rounded border"
+                        unoptimized={true} 
                       />
                     ))}
                   </div>

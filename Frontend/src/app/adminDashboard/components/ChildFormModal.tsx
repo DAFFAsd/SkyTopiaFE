@@ -33,19 +33,17 @@ export default function ChildFormModal({
     });
     const [errors, setErrors] = useState<Partial<Record<keyof ChildFormData, string>>>({});
 
-    // Fetch parents when modal opens
     useEffect(() => {
         if (isOpen) {
             fetchParents();
         }
     }, [isOpen]);
 
-    // Initialize form data when editing
     useEffect(() => {
         if (child) {
             setFormData({
                 name: child.name,
-                birth_date: child.birth_date.split('T')[0], // Format date for input
+                birth_date: child.birth_date.split('T')[0], 
                 gender: child.gender,
                 parent_id: child.parent_id._id,
                 medical_notes: child.medical_notes || '',
@@ -54,7 +52,6 @@ export default function ChildFormModal({
                 schedules: child.schedules.map(s => s._id)
             });
         } else {
-            // Reset form for new child
             setFormData({
                 name: '',
                 birth_date: '',
@@ -82,8 +79,7 @@ export default function ChildFormModal({
 
             const data = await response.json();
             if (data.success) {
-                // Filter only parents
-                const parentUsers = data.users.filter((user: any) => user.role === 'Parent');
+                const parentUsers = data.users.filter((user: Parent & { role: string }) => user.role === 'Parent');
                 setParents(parentUsers);
             }
         } catch (error) {
@@ -146,7 +142,6 @@ export default function ChildFormModal({
             ...prev,
             [name]: name === 'monthly_fee' || name === 'semester_fee' ? Number(value) : value
         }));
-        // Clear error for this field
         if (errors[name as keyof ChildFormData]) {
             setErrors(prev => ({ ...prev, [name]: undefined }));
         }

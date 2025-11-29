@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { FiArrowLeft, FiFilter, FiRefreshCw, FiCheck, FiPlus, FiX, FiLoader } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface ReceivedItem {
     _id: string;
@@ -34,11 +34,9 @@ export default function InventoryReceivedReportPage() {
         notes: ''
     });
 
-    useEffect(() => {
-        fetchData();
-    }, [dateFilter, searchTerm]);
-
-    const fetchData = async () => {
+    // 1. Bungkus fetchData dengan useCallback
+    // Ini bikin fungsinya bisa "hidup" di luar useEffect tapi tetap aman
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
@@ -69,8 +67,12 @@ export default function InventoryReceivedReportPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [dateFilter, searchTerm]); // Dependency array pindah ke sini
 
+    // 2. useEffect tinggal panggil fungsi itu
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]); // Dependency-nya sekarang adalah fungsinya sendiri
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -213,7 +215,7 @@ export default function InventoryReceivedReportPage() {
                             <select
                                 id="dateFilter"
                                 value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value as any)}
+                                onChange={(e) => setDateFilter(e.target.value as 'all' | 'today' | 'week' | 'month')}
                                 className="rounded-md border border-gray-300 px-3 py-1 text-sm"
                             >
                                 <option value="all">Semua Waktu</option>

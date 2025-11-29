@@ -61,11 +61,6 @@ export default function ParentSidebar({ onToggle }: { onToggle: () => void }) {
 
     return (
         <> 
-            {/* PERBAIKAN DISINI: 
-               1. Hapus 'hidden md:flex' -> Supaya di HP isinya tetap dirender.
-               2. Hapus 'fixed' -> Karena layout parentnya sudah fixed.
-               3. Ganti 'w-64' jadi 'w-full h-full' -> Biar ngikutin container parent.
-            */}
             <aside className="w-full h-full flex flex-col bg-sidebar-bg p-6 border-r border-gray-200">
                 <div className="flex-1">
                     <div className="mb-10 flex items-center justify-center">

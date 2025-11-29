@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FiClipboard, FiCalendar, FiFileText } from 'react-icons/fi';
+import { FiClipboard, FiFileText } from 'react-icons/fi';
 import PageHeader from '../components/PageHeader';
 import DailyReportsTab from './DailyReportsTab';
 import SemesterReportsTab from './SemesterReportsTab';

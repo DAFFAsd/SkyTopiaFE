@@ -19,8 +19,6 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
     const [selectedYear, setSelectedYear] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedReport, setSelectedReport] = useState<SemesterReport | null>(null);
-    
-    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -31,12 +29,9 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
     const applyFilters = useCallback(() => {
         let filtered = [...reports];
 
-        // Filter by child
         if (selectedChildId) {
             filtered = filtered.filter(report => report.child_id._id === selectedChildId);
         }
-
-        // Filter by semester and year
         if (selectedYear && selectedSemester) {
             const semesterString = `${selectedYear}-${selectedSemester}`;
             filtered = filtered.filter(report => report.semester === semesterString);
@@ -46,7 +41,6 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
             filtered = filtered.filter(report => report.semester.endsWith(`-${selectedSemester}`));
         }
 
-        // Filter by search query
         if (searchQuery.trim()) {
             filtered = filtered.filter(report =>
                 report.child_id.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,15 +48,13 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
             );
         }
 
-        // Sort by semester (newest first)
         filtered.sort((a, b) => b.semester.localeCompare(a.semester));
 
         setFilteredReports(filtered);
         setCurrentPage(1);
 
-    }, [reports, selectedChildId, selectedYear, selectedSemester, searchQuery]); // <--- INI YANG KURANG TADI
+    }, [reports, selectedChildId, selectedYear, selectedSemester, searchQuery]); 
 
-    // useEffect jadi bersih begini:
     useEffect(() => {
         applyFilters();
     }, [applyFilters]);
@@ -74,12 +66,10 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
         setSearchQuery('');
     };
 
-    // Get unique years from reports
     const availableYears = Array.from(
         new Set(reports.map(r => r.semester.split('-')[0]))
     ).sort((a, b) => parseInt(b) - parseInt(a));
 
-    // Pagination
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredReports.slice(indexOfFirstItem, indexOfLastItem);

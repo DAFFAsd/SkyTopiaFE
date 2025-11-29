@@ -28,10 +28,6 @@ export default function DailyReportsTab({ reports, children, isLoading }: DailyR
     }, [reports]);
 
     useEffect(() => {
-        applyFilters();
-    }, [selectedChildId, startDate, endDate, searchQuery, reports]);
-
-    const applyFilters = () => {
         let filtered = [...reports];
 
         // Filter by child
@@ -59,8 +55,10 @@ export default function DailyReportsTab({ reports, children, isLoading }: DailyR
         filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setFilteredReports(filtered);
+        // Reset ke halaman 1 setiap kali filter berubah
         setCurrentPage(1);
-    };
+
+    }, [reports, selectedChildId, startDate, endDate, searchQuery]); // Dependency array jadi jelas & aman
 
     const clearFilters = () => {
         setSelectedChildId('');

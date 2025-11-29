@@ -1,10 +1,9 @@
-// Children Management Page - Admin Dashboard
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiUser } from 'react-icons/fi';
 import { Child, ChildFormData } from '../types/child.types';
-import { getAllChildren, createChild, updateChild, deleteChild, searchChildren } from '../services/childService';
+import { getAllChildren, createChild, updateChild, deleteChild } from '../services/childService';
 import ChildFormModal from '../components/ChildFormModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
@@ -14,24 +13,19 @@ export default function ChildrenPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isSearching, setIsSearching] = useState(false);
 
-    // Modal states
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedChild, setSelectedChild] = useState<Child | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
 
-    // Fetch children on component mount
     useEffect(() => {
         fetchChildren();
     }, []);
 
-    // Handle search
     useEffect(() => {
         if (searchQuery.trim() === '') {
             setFilteredChildren(children);
@@ -43,7 +37,7 @@ export default function ChildrenPage() {
             );
             setFilteredChildren(filtered);
         }
-        setCurrentPage(1); // Reset to first page when searching
+        setCurrentPage(1); 
     }, [searchQuery, children]);
 
     const fetchChildren = async () => {
@@ -80,15 +74,13 @@ export default function ChildrenPage() {
         setIsSubmitting(true);
         try {
             if (selectedChild) {
-                // Update existing child
                 await updateChild(selectedChild._id, formData);
             } else {
-                // Create new child
                 await createChild(formData);
             }
             setIsFormModalOpen(false);
             setSelectedChild(null);
-            await fetchChildren(); // Refresh the list
+            await fetchChildren(); 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Gagal menyimpan data anak';
             alert(errorMessage);
@@ -105,7 +97,7 @@ export default function ChildrenPage() {
             await deleteChild(selectedChild._id);
             setIsDeleteModalOpen(false);
             setSelectedChild(null);
-            await fetchChildren(); // Refresh the list
+            await fetchChildren();
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Gagal menghapus data anak';
             alert(errorMessage);
@@ -114,7 +106,6 @@ export default function ChildrenPage() {
         }
     };
 
-    // Pagination calculations
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredChildren.slice(indexOfFirstItem, indexOfLastItem);
@@ -124,7 +115,6 @@ export default function ChildrenPage() {
         setCurrentPage(pageNumber);
     };
 
-    // Calculate age from birth date
     const calculateAge = (birthDate: string): number => {
         const birth = new Date(birthDate);
         const today = new Date();
@@ -136,7 +126,6 @@ export default function ChildrenPage() {
         return age;
     };
 
-    // Format date to Indonesian format
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleDateString('id-ID', {
@@ -144,15 +133,6 @@ export default function ChildrenPage() {
             month: 'long',
             year: 'numeric'
         });
-    };
-
-    // Format currency
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
     };
 
     if (isLoading) {

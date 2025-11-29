@@ -490,7 +490,7 @@ export default function TeacherManagementPage() {
           {teachers.length === 0 && (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
               <p className="text-gray-600 font-medium">Belum ada data guru</p>
-              <p className="text-gray-500 text-sm mt-1">Klik tombol "Tambah Guru" untuk menambahkan guru baru</p>
+              <p className="text-gray-500 text-sm mt-1">Klik tombol Tambah Guru untuk menambahkan guru baru</p>
             </div>
           )}
 

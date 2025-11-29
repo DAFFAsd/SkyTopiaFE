@@ -1,4 +1,3 @@
-// Delete Confirmation Modal Component
 'use client';
 
 interface DeleteConfirmModalProps {

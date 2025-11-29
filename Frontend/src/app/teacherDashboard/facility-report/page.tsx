@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { FiArrowLeft, FiPlus, FiCamera } from 'react-icons/fi';
+import { FiArrowLeft, FiCamera } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 

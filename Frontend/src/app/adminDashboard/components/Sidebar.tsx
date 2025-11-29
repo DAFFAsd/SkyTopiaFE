@@ -31,7 +31,8 @@ const navItems: NavItem[] = [
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiDatabase },
     { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCheckSquare },
     { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
-    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
+    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    
+    { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
     { name: 'Tagihan', href: '/adminDashboard/billing', icon: FiDollarSign },
 ];
 
@@ -89,7 +90,6 @@ export default function AdminSidebar({
         ? (isMobileOpen ? 'left-0' : '-left-64')
         : 'left-0';
 
-    // Adjust horizontal padding when collapsed to prevent squeezing
     const paddingClass = isCollapsed && !isMobile ? 'px-2' : 'px-6';
 
     const handleToggleClick = () => {
@@ -102,7 +102,6 @@ export default function AdminSidebar({
 
     return (
         <>
-            {/* Mobile backdrop */}
             {isMobile && isMobileOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black/50 md:hidden"
@@ -118,7 +117,6 @@ export default function AdminSidebar({
                     ${asidePositionClass}
                 `}
             >
-                {/* Logo area - ALWAYS render, just swap which image */}
                 <div className="mb-6 flex items-center justify-center flex-shrink-0">
                     {isCollapsed && !isMobile ? (
                         <Image 
@@ -139,7 +137,6 @@ export default function AdminSidebar({
                     )}
                 </div>
 
-                {/* Nav - ALWAYS render icons */}
                 <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden">
                     <nav className="flex flex-col space-y-2">
                         {navItems.map((link) => {
@@ -158,10 +155,8 @@ export default function AdminSidebar({
                                     `}
                                     title={collapsed ? link.name : undefined}
                                 >
-                                    {/* ALWAYS render the icon */}
                                     <link.icon className="w-6 h-6 flex-shrink-0" />
                                     
-                                    {/* Conditionally render the label */}
                                     {!collapsed && (
                                         <span className="truncate">{link.name}</span>
                                     )}
@@ -171,7 +166,6 @@ export default function AdminSidebar({
                     </nav>
                 </div>
 
-                {/* Bottom actions - ALWAYS render icons */}
                 <div className="flex flex-col space-y-4 pt-4 mt-auto border-t border-gray-200">
                     <button
                         onClick={handleToggleClick}

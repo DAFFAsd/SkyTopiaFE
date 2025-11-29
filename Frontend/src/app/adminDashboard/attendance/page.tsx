@@ -29,7 +29,6 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Filter states
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');

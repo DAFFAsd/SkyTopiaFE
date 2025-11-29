@@ -1,4 +1,3 @@
-// User Form Modal Component with Dynamic Fields
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -37,20 +36,18 @@ export default function UserFormModal({
     });
     const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
 
-    // Fetch children when modal opens and Parent is selected
     useEffect(() => {
         if (isOpen && formData.role === 'Parent') {
             fetchChildren();
         }
     }, [isOpen, formData.role]);
 
-    // Initialize form data when editing
     useEffect(() => {
         if (user) {
             setFormData({
                 name: user.name,
                 email: user.email,
-                password: '', // Don't show existing password
+                password: '', 
                 phone: user.phone || '',
                 role: user.role,
                 nip: '',
@@ -59,7 +56,6 @@ export default function UserFormModal({
                 childId: ''
             });
         } else {
-            // Reset form for new user
             setFormData({
                 name: '',
                 email: '',
@@ -101,7 +97,6 @@ export default function UserFormModal({
     const validateForm = (): boolean => {
         const newErrors: Partial<Record<keyof UserFormData, string>> = {};
 
-        // Common validations
         if (!formData.name.trim()) {
             newErrors.name = 'Nama lengkap harus diisi';
         }
@@ -112,7 +107,6 @@ export default function UserFormModal({
             newErrors.email = 'Format email tidak valid';
         }
 
-        // Password validation (required for new users, optional for updates)
         if (!user) {
             if (!formData.password) {
                 newErrors.password = 'Password harus diisi';
@@ -120,18 +114,15 @@ export default function UserFormModal({
                 newErrors.password = 'Password minimal 8 karakter';
             }
         } else {
-            // For updates, only validate if password is provided
             if (formData.password && formData.password.length < 8) {
                 newErrors.password = 'Password minimal 8 karakter';
             }
         }
 
-        // Phone validation (optional but format check if provided)
         if (formData.phone && !/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
             newErrors.phone = 'Format nomor telepon tidak valid';
         }
 
-        // Role-specific validations
         if (formData.role === 'Teacher') {
             if (!formData.nip?.trim()) {
                 newErrors.nip = 'NIP (ID Karyawan) harus diisi';
@@ -168,7 +159,6 @@ export default function UserFormModal({
             ...prev,
             [name]: value
         }));
-        // Clear error for this field
         if (errors[name as keyof UserFormData]) {
             setErrors(prev => ({ ...prev, [name]: undefined }));
         }
@@ -179,7 +169,6 @@ export default function UserFormModal({
         setFormData(prev => ({
             ...prev,
             role: newRole,
-            // Clear role-specific fields
             nip: '',
             assignedClass: '',
             address: '',

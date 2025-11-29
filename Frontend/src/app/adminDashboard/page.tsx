@@ -209,7 +209,7 @@ export default function DashboardAdminPage() {
                             const requestsArray = toArray(requestsData, ['requests', 'data']);
                             const pendingRequests = requestsArray.filter((r: any) => r && (r.status === 'Pending' || r.status === 'pending')).length;
                             setStats(prev => ({ ...prev, pendingRequests }));
-                        } catch (e) {
+                        } catch {
                             console.warn('Failed to fetch inventory requests for pending count');
                         }
 
@@ -217,7 +217,7 @@ export default function DashboardAdminPage() {
                         return;
                     }
                 }
-            } catch (apiError) {
+            } catch {
                 console.log('Dashboard stats endpoint not available, fetching individual endpoints...');
             }
 

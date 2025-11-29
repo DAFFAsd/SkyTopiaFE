@@ -29,7 +29,6 @@ export default function ReportsPage() {
     const [isLoadingDaily, setIsLoadingDaily] = useState(true);
     const [errorDaily, setErrorDaily] = useState('');
 
-    // Semester reports state
     const [semesterReports, setSemesterReports] = useState<SemesterReport[]>([]);
     const [isLoadingSemester, setIsLoadingSemester] = useState(true);
     const [errorSemester, setErrorSemester] = useState<string | null>(null);
