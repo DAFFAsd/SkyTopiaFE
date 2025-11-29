@@ -1,65 +1,61 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import ParentSidebar from './components/Sidebar'; 
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu } from 'react-icons/fi';
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    // State harus sesuai dengan props yang diminta Sidebar.tsx
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <div className="min-h-screen bg-gray-50">
             
-            {/* MOBILE OVERLAY */}
-            {isSidebarOpen && (
-                <div 
-                    className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
-                    onClick={() => setIsSidebarOpen(false)} 
-                ></div>
-            )}
+            {/* 1. SIDEBAR */}
+            {/* Kita panggil komponen Sidebar dan oper semua state yang dibutuhkan */}
+            <ParentSidebar 
+                isCollapsed={isCollapsed}
+                onToggleCollapsed={() => setIsCollapsed(!isCollapsed)}
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+            />
 
-            {/* SIDEBAR WRAPPER */}
+            {/* 2. MAIN CONTENT WRAPPER */}
+            {/* Disini kuncinya: 
+                - md:ml-64 = Memberi margin kiri 256px saat sidebar lebar
+                - md:ml-20 = Memberi margin kiri 80px saat sidebar kecil (collapsed)
+                - transition-all = Biar animasi gesernya halus
+            */}
             <div className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out
-                md:relative md:translate-x-0 md:shadow-none 
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out
+                ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}
             `}>
-                {/* Close Button Mobile */}
-                <button 
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-red-500"
-                >
-                    <FiX className="h-6 w-6" />
-                </button>
-
-                <ParentSidebar onToggle={() => setIsSidebarOpen(false)} />
-            </div>
-
-            {/* MAIN CONTENT */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 
-                <div className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-30">
+                {/* MOBILE HEADER (Hanya muncul di layar HP) */}
+                <header className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
                     <div className="flex items-center">
                         <Image 
                             src="/skytopia-logo.svg" 
                             alt="SkyTopia" 
-                            width={150} 
-                            height={50} 
+                            width={120} 
+                            height={40} 
                             className="w-auto h-8"
                         />
                     </div>
 
                     <button
-                        onClick={() => setIsSidebarOpen(true)}
+                        onClick={() => setIsMobileOpen(true)}
                         className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-brand-purple transition-colors"
+                        aria-label="Buka Menu"
                     >
                         <FiMenu className="h-6 w-6" />
                     </button>
-                </div>
+                </header>
 
-                {/* CONTENT */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+                {/* PAGE CONTENT */}
+                <main className="flex-1 p-4 md:p-8">
                     {children}
                 </main>
             </div>
