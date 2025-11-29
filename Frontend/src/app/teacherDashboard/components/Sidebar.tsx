@@ -12,7 +12,6 @@ import {
     FiCheckSquare,
     FiCalendar,
     FiArchive,
-    FiAlertTriangle,
     FiArrowLeftCircle,
     FiUser,
     FiLogOut
@@ -28,8 +27,7 @@ import {
     ];
 
     const bottomLinks = [
-    { name: 'Request Inventaris', href: '/teacherDashboard/inventory-request', icon: FiArchive },
-    { name: 'Lapor Fasilitas', href: '/teacherDashboard/facility-report', icon: FiAlertTriangle },
+    { name: 'Permintaan & Laporan', href: '/teacherDashboard/resource-requests', icon: FiArchive },
     ];
 
     export default function TeacherSidebar({ onToggle }: { onToggle: () => void }) {

@@ -14,14 +14,14 @@ import {
     FiDatabase,
     FiCheckSquare,
     FiCalendar,
-    FiPackage,
     FiBarChart,
     FiDollarSign,
     FiArrowLeftCircle,
     FiLogOut,
 } from 'react-icons/fi';
+import { IconType } from 'react-icons';
 
-type NavItem = { name: string; href: string; icon: any };
+type NavItem = { name: string; href: string; icon: IconType };
 
 const navItems: NavItem[] = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
@@ -30,8 +30,8 @@ const navItems: NavItem[] = [
     { name: 'Semua Laporan', href: '/adminDashboard/reports', icon: FiFileText },
     { name: 'Guru', href: '/adminDashboard/teacher', icon: FiDatabase },
     { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCheckSquare },
-    { name: 'Kurikulum & Jadwal', href: '/adminDashboard/curriculum', icon: FiCalendar },
-    { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
+    { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
+    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
     { name: 'Tagihan', href: '/adminDashboard/billing', icon: FiDollarSign },
 ];
 
