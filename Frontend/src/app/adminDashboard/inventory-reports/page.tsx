@@ -47,7 +47,6 @@ export default function InventoryReportsPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-    const [searchTerm, setSearchTerm] = useState('');
     const [requestSearchTerm, setRequestSearchTerm] = useState('');
     const [showItemForm, setShowItemForm] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);

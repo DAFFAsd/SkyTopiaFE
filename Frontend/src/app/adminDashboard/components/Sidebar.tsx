@@ -3,42 +3,63 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import {
     FiHome,
-    FiUser,
+    FiUsers,
+    FiSmile,
+    FiFileText,
+    FiDatabase,
+    FiCheckSquare,
     FiCalendar,
+    FiBarChart,
     FiDollarSign,
     FiArrowLeftCircle,
-    FiPackage,
-    FiBarChart,
-    FiUsers,
-    FiClipboard, 
-    FiFileText, 
     FiLogOut,
 } from 'react-icons/fi';
+import { IconType } from 'react-icons';
 
-const navLinks = [
+type NavItem = { name: string; href: string; icon: IconType };
+
+const navItems: NavItem[] = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
-    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiFileText },
-    { name: 'Data Anak', href: '/adminDashboard/children', icon: FiUsers },
-    { name: 'Laporan Harian', href: '/adminDashboard/daily-reports', icon: FiClipboard },
-    { name: 'Manajemen Guru', href: '/adminDashboard/teacher-management', icon: FiUser },
+    { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiUsers },
+    { name: 'Data Anak', href: '/adminDashboard/children', icon: FiSmile },
+    { name: 'Semua Laporan', href: '/adminDashboard/reports', icon: FiFileText },
+    { name: 'Guru', href: '/adminDashboard/teacher', icon: FiDatabase },
+    { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCheckSquare },
     { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
-    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },
+    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
-];
-
-const bottomLinks = [
     { name: 'Tagihan', href: '/adminDashboard/billing', icon: FiDollarSign },
 ];
 
-export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
+export default function AdminSidebar({
+    isCollapsed,
+    onToggleCollapsed,
+    isMobileOpen,
+    setIsMobileOpen,
+}: {
+    isCollapsed: boolean;
+    onToggleCollapsed: () => void;
+    isMobileOpen: boolean;
+    setIsMobileOpen: (open: boolean) => void;
+}) {
     const pathname = usePathname();
     const router = useRouter();
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
-    const logout = async () => {
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth < 768);
+        handler();
+        window.addEventListener('resize', handler);
+        return () => window.removeEventListener('resize', handler);
+    }, []);
+
+    const confirmLogout = async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
@@ -55,86 +76,149 @@ export default function AdminSidebar({ onToggle }: { onToggle: () => void }) {
         } finally {
             localStorage.removeItem('token');
             router.push('/login');
+            setShowLogoutModal(false);
+        }
+    };
+
+    const containerWidthClass = isMobile
+        ? 'w-64'
+        : isCollapsed
+            ? 'w-20'
+            : 'w-64';
+
+    const asidePositionClass = isMobile
+        ? (isMobileOpen ? 'left-0' : '-left-64')
+        : 'left-0';
+
+    const paddingClass = isCollapsed && !isMobile ? 'px-2' : 'px-6';
+
+    const handleToggleClick = () => {
+        if (isMobile) {
+            setIsMobileOpen(false);
+        } else {
+            onToggleCollapsed();
         }
     };
 
     return (
-    <aside className="w-64 flex flex-col bg-sidebar-bg border-r border-gray-200  md:flex fixed h-screen px-6 py-6"> 
-        
-        <div className="mb-6 flex items-center justify-center flex-shrink-0">
-            <Image src="/skytopia-logo.svg" alt="SkyTopia Logo" width={150} height={40} />
-        </div>
+        <>
+            {isMobile && isMobileOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
 
+            <aside
+                className={`flex flex-col bg-sidebar-bg border-r border-gray-200 fixed h-screen py-6 z-50
+                    ${containerWidthClass}
+                    ${paddingClass}
+                    transition-all duration-300 ease-in-out
+                    ${asidePositionClass}
+                `}
+            >
+                <div className="mb-6 flex items-center justify-center flex-shrink-0">
+                    {isCollapsed && !isMobile ? (
+                        <Image 
+                            src="/skytopia-icon.svg" 
+                            alt="SkyTopia Icon" 
+                            width={40} 
+                            height={40}
+                            className="flex-shrink-0"
+                        />
+                    ) : (
+                        <Image 
+                            src="/skytopia-logo.svg" 
+                            alt="SkyTopia Logo" 
+                            width={150} 
+                            height={40}
+                            className="flex-shrink-0"
+                        />
+                    )}
+                </div>
 
-        <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden"> 
+                <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden">
+                    <nav className="flex flex-col space-y-2">
+                        {navItems.map((link) => {
+                            const isActive =
+                                pathname === link.href ||
+                                (link.href !== '/adminDashboard' && pathname.startsWith(link.href));
+                            const collapsed = isCollapsed && !isMobile;
+                            
+                            return (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className={`flex rounded-lg p-3 text-sm font-medium transition-colors
+                                        ${collapsed ? 'justify-center' : 'justify-start items-center space-x-3'}
+                                        ${isActive ? 'bg-active-pink text-active-pink-text' : 'text-sidebar-text hover:bg-gray-100'}
+                                    `}
+                                    title={collapsed ? link.name : undefined}
+                                >
+                                    <link.icon className="w-6 h-6 flex-shrink-0" />
+                                    
+                                    {!collapsed && (
+                                        <span className="truncate">{link.name}</span>
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
 
-            <nav className="flex flex-col space-y-2">
-                {navLinks.map((link) => {
-                    const isActive = pathname === link.href || (link.href !== '/adminDashboard' && pathname.startsWith(link.href));
-                    return (
-                    <Link
-                        key={link.name}
-                        href={link.href}
-                        className={`flex items-center space-x-3 rounded-lg p-3 text-sm font-medium
-                            ${
-                            isActive
-                                ? 'bg-active-pink text-active-pink-text'
-                                : 'text-sidebar-text hover:bg-gray-100'
-                            }
+                <div className="flex flex-col space-y-4 pt-4 mt-auto border-t border-gray-200">
+                    <button
+                        onClick={handleToggleClick}
+                        className={`flex p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full transition-colors
+                            ${isCollapsed && !isMobile ? 'justify-center' : 'justify-start items-center space-x-3'}
                         `}
+                        title={isCollapsed && !isMobile ? 'Perbesar Sidebar' : 'Perkecil Sidebar'}
                     >
-                        <link.icon className="h-5 w-5" />
-                        <span>{link.name}</span>
-                    </Link>
-                    );
-                })}
-            </nav>
+                        <FiArrowLeftCircle className="w-6 h-6 flex-shrink-0" />
+                        {(!isCollapsed || isMobile) && (
+                            <span className="truncate">
+                                {isCollapsed && !isMobile ? 'Perbesar' : 'Sembunyikan'}
+                            </span>
+                        )}
+                    </button>
 
-            <nav className="flex flex-col space-y-2">
-                {bottomLinks.map((link) => {
-                    const isActive = pathname.startsWith(link.href);
-                    return (
-                        <Link
-                            key={link.name}
-                            href={link.href}
-                            className={`flex items-center justify-between rounded-lg p-3 text-sm font-medium
-                                ${
-                                    isActive
-                                    ? 'bg-active-pink text-active-pink-text'
-                                    : 'text-sidebar-text hover:bg-gray-100'
-                                }
-                            `}
-                        >
-                            <div className="flex items-center space-x-3">
-                            <link.icon className="h-5 w-5" />
-                            <span>{link.name}</span>
-                            </div>
-                        </Link>
-                    );
-                })}
-            </nav>
-        </div>
-        
-        <div className="flex flex-col space-y-4 pt-4 mt-auto border-t border-gray-200">
-            <button
-                onClick={onToggle}
-                className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
-            >
-            <FiArrowLeftCircle className="h-5 w-5" />
-            <span>Sembunyikan</span>
-            </button>
-            
-            <button
-                onClick={logout}
-                className="flex items-center space-x-3 p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full text-left"
-            >
-            <FiLogOut className="h-5 w-5" />
-            <span>Logout</span>
-            </button>
-            
-            <div className="flex items-center justify-around text-sidebar-text">
-            </div>
-        </div>
-    </aside>
+                    <button
+                        onClick={() => setShowLogoutModal(true)}
+                        className={`flex p-3 text-sm font-medium text-sidebar-text hover:bg-gray-100 rounded-lg w-full transition-colors
+                            ${isCollapsed && !isMobile ? 'justify-center' : 'justify-start items-center space-x-3'}
+                        `}
+                        title={isCollapsed && !isMobile ? 'Logout' : undefined}
+                    >
+                        <FiLogOut className="w-6 h-6 flex-shrink-0" />
+                        {(!isCollapsed || isMobile) && (
+                            <span className="truncate">Logout</span>
+                        )}
+                    </button>
+                </div>
+            </aside>
+
+            {showLogoutModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-6 rounded-xl shadow-lg w-80 transform transition-all scale-100">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">Konfirmasi Logout</h3>
+                        <p className="text-gray-600 mb-6 text-sm">Apakah Anda yakin ingin keluar dari aplikasi?</p>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setShowLogoutModal(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={confirmLogout}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                            >
+                                Ya, Keluar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

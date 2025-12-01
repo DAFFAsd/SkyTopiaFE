@@ -188,7 +188,7 @@ export default function AdminDailyReportsPage() {
                     </div>
                 </div>
             ) : reports.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Layout grid untuk card */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {reports.map((report) => (
                         <div key={report._id} className="rounded-xl bg-white p-6 shadow-lg border border-login-pink/30 hover:shadow-xl transform hover:scale-[1.01] transition-all duration-200 ease-in-out">
                             <div className="flex items-center justify-between mb-4 pb-4 border-b border-brand-purple/20">

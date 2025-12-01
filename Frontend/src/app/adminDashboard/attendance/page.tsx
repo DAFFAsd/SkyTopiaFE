@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiLoader, FiDownload, FiFilter, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
+import { FiLoader, FiDownload, FiFilter, FiArrowLeft } from 'react-icons/fi';
 
 interface AttendanceRecord {
   _id: string;
@@ -29,7 +29,6 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Filter states
   const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');

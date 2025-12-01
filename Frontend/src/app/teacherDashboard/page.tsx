@@ -2,10 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { IconType } from 'react-icons';
 import { 
     FiClipboard, FiBookOpen, FiCheckSquare, FiArchive, FiAlertTriangle, FiCalendar,
-    FiUsers, FiBarChart, FiFileText
+    FiUsers, FiFileText
 } from 'react-icons/fi';
+
+interface Child {
+    _id: string;
+    name: string;
+    birth_date: string;
+    gender: string;
+    assignedTeacher?: unknown; 
+}
 
 interface DashboardStats {
     totalChildren: number;
@@ -45,7 +54,7 @@ function DashboardButton({
 }: { 
     title: string; 
     href: string; 
-    icon: any; 
+    icon: IconType; 
     description?: string;
     variant?: 'default' | 'pink';
 }) {
@@ -83,7 +92,7 @@ function StatCard({
     iconBgColor, 
     iconColor 
 }: { 
-    icon: any; 
+    icon: IconType; 
     value: number | string; 
     label: string; 
     iconBgColor: string; 
@@ -173,22 +182,42 @@ export default function TeacherDashboardPage() {
                         return;
                     }
                 }
-            } catch (apiError) {
+            } catch {
                 console.log('Dashboard stats endpoint not available, fetching individual endpoints...');
             }
 
             // Fallback: Fetch from individual endpoints
             const [childrenRes, attendanceRes] = await Promise.all([
                 fetch('http://localhost:3000/api/children', { headers }),
-                fetch('http://localhost:3000/api/attendance', { headers })
+                fetch('http://localhost:3000/api/attendances/my-records', { headers })
             ]);
 
-            let reportsRes = await fetch('http://localhost:3000/api/daily-reports', { headers });
+            const reportsRes = await fetch('http://localhost:3000/api/daily-reports/my-reports', { headers });
 
-            // Check response status
-            if (!childrenRes.ok) throw new Error('Failed to fetch children data');
-            if (!attendanceRes.ok) throw new Error('Failed to fetch attendance data');
-            if (!reportsRes.ok) throw new Error('Failed to fetch reports data');
+            // --- KODE DEBUGGING MULAI ---
+            // Cek status Children
+            if (!childrenRes.ok) {
+                console.error("Children Error:", childrenRes.status, await childrenRes.text());
+                throw new Error('Gagal ambil data murid');
+            }
+
+            // Cek status Attendance (Ini yang bermasalah)
+            if (!attendanceRes.ok) {
+                const status = attendanceRes.status;
+                const text = await attendanceRes.text();
+                console.error("Attendance Error Detail:", status, text); // <--- LIHAT INI DI CONSOLE BROWSER
+                
+                if (status === 403) throw new Error('Akses ditolak: Anda bukan Guru?');
+                if (status === 404) throw new Error('URL Salah: Endpoint tidak ditemukan');
+                throw new Error(`Gagal ambil absensi: ${status} ${text}`);
+            }
+
+            // Cek status Reports
+            if (!reportsRes.ok) {
+                console.error("Reports Error:", reportsRes.status, await reportsRes.text());
+                throw new Error('Gagal ambil data laporan');
+            }
+            // --- KODE DEBUGGING SELESAI ---
 
             const childrenData = await childrenRes.json();
             const attendanceData = await attendanceRes.json();
@@ -204,12 +233,14 @@ export default function TeacherDashboardPage() {
                 childrenArray = childrenData.data;
             }
             const totalChildren = childrenArray.length;
-            const totalAssignedChildren = childrenArray.filter((c: any) => c && c.assignedTeacher).length;
+            const totalAssignedChildren = childrenArray.filter((c: Child) => c && c.assignedTeacher).length;
 
             // Get attendance for today
             let attendanceArray = [];
             if (Array.isArray(attendanceData)) {
                 attendanceArray = attendanceData;
+            } else if (attendanceData.records && Array.isArray(attendanceData.records)) {
+                attendanceArray = attendanceData.records;
             } else if (attendanceData.attendance && Array.isArray(attendanceData.attendance)) {
                 attendanceArray = attendanceData.attendance;
             } else if (attendanceData.data && Array.isArray(attendanceData.data)) {
@@ -221,7 +252,7 @@ export default function TeacherDashboardPage() {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-            const todayAttendance = attendanceArray.filter((att: any) => {
+            const todayAttendance = attendanceArray.filter((att: { date: string }) => {
                 if (!att || !att.date) return false;
                 const attDate = new Date(att.date);
                 return attDate >= today && attDate < tomorrow;
@@ -236,7 +267,7 @@ export default function TeacherDashboardPage() {
             } else if (reportsData.data && Array.isArray(reportsData.data)) {
                 reportsArray = reportsData.data;
             }
-            const completedReports = reportsArray.filter((r: any) => r && r.status === 'Completed').length;
+            const completedReports = reportsArray.filter((r: { status: string }) => r && r.status === 'Completed').length;
 
             setStats({
                 totalChildren,

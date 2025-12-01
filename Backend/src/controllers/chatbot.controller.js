@@ -20,7 +20,7 @@ exports.startChatbot = async (req, res) => {
         res.json({
             success: true,
             thread_id: threadId,
-            response,
+            ai_message: response.message,
             message: "Chatbot session started successfully"
         });
     } catch (error) {
@@ -50,7 +50,7 @@ exports.continueChatbot = async (req, res) => {
         res.json({
             success: true,
             thread_id: threadId,
-            response,
+            ai_message: response.message,
             message: "Message sent successfully"
         });
     } catch (error) {

@@ -400,6 +400,6 @@ export default function AttendancePage() {
                     </table>
                 </div>
             </div>
-        </div>
-    );
+        </div>
+    );
 }

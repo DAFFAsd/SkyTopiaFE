@@ -125,9 +125,9 @@ export default function InventoryRequestPage() {
             } else {
                 setError(data.message || 'Gagal membuat permintaan');
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error('Error:', err);
-            setError(err.message || 'Terjadi kesalahan');
+            setError((err as Error).message || 'Terjadi kesalahan');
         } finally {
             setSubmitting(false);
         }

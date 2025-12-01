@@ -20,7 +20,7 @@ export default function CurriculumPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Curriculum | null>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<Partial<Curriculum>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

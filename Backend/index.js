@@ -16,6 +16,7 @@ const inventoryRoutes = require('./src/routes/inventory.route');
 const curriculumRoutes = require('./src/routes/curriculum.route');
 const scheduleRoutes = require('./src/routes/schedule.route');
 const attendanceRoutes = require('./src/routes/attendance.route');
+const uploadRoutes = require('./src/routes/upload.route');
 
 // Server configuration
 const port = process.env.PORT || 3000;
@@ -50,6 +51,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/curriculums', curriculumRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/attendances', attendanceRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Start payment scheduler
 startScheduler(); 
