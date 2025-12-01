@@ -174,7 +174,7 @@ export default function BillingPage() {
         </Link>
 
         <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-brand-purple">
+            <h1 className="font-rammetto text-3xl text-brand-purple">
                 Tagihan & Pembayaran
             </h1>
             

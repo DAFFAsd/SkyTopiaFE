@@ -211,50 +211,100 @@ export default function ChildrenPage() {
             </div>
 
             {/* Table */}
-            <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {currentItems.length > 0 ? (
-                        currentItems.map((child) => (
-                            <div
-                                key={child._id}
-                                className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 transition-all hover:shadow-lg hover:border-login-pink"
-                            >
-                                <div className="flex flex-col items-center">
-                                    <div className="h-24 w-24 rounded-full bg-stat-pink-bg flex items-center justify-center mb-4">
-                                        <FiUser className="h-12 w-12 text-pink-500" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-brand-purple">{child.name}</h3>
-                                    <p className="text-sm text-gray-600">{child.gender}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Lahir: {formatDate(child.birth_date)}</p>
-                                    <div className="flex justify-center gap-2 mt-4">
-                                        <button
-                                            onClick={() => handleEditChild(child)}
-                                            className="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
-                                            title="Edit"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteChild(child)}
-                                            className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm"
-                                            title="Hapus"
-                                        >
-                                            Hapus
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-gray-500 col-span-full text-center">
-                            {searchQuery ? 'Tidak ada data yang sesuai dengan pencarian' : 'Belum ada data anak'}
-                        </p>
-                    )}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nama Anak
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tanggal Lahir
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Usia
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Jenis Kelamin
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Orang Tua
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Kontak
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Jadwal
+                                </th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {currentItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                                        {searchQuery ? 'Tidak ada data yang sesuai dengan pencarian' : 'Belum ada data anak'}
+                                    </td>
+                                </tr>
+                            ) : (
+                                currentItems.map((child) => (
+                                    <tr key={child._id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">{child.name}</div>
+                                            {child.medical_notes && (
+                                                <div className="text-xs text-orange-600">⚠️ Ada catatan medis</div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {formatDate(child.birth_date)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {calculateAge(child.birth_date)} tahun
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {child.gender}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-900">{child.parent_id.name}</div>
+                                            <div className="text-xs text-gray-500">{child.parent_id.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {child.parent_id.phone || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {child.schedules.length} jadwal
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            <div className="flex justify-center space-x-2">
+                                                <button
+                                                    onClick={() => handleEditChild(child)}
+                                                    className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <FiEdit className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteChild(child)}
+                                                    className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded transition-colors"
+                                                    title="Hapus"
+                                                >
+                                                    <FiTrash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="bg-white rounded-lg shadow p-4 mt-6">
+                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-700">
                                 Menampilkan {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredChildren.length)} dari {filteredChildren.length} data
