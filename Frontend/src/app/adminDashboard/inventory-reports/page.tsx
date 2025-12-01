@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FiArrowLeft, FiFilter, FiRefreshCw, FiTrendingUp, FiCheckCircle, FiXCircle, FiClock, FiPlus, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import PageHeader from '../../../components/PageHeader';
 
 interface InventoryItem {
     _id: string;
@@ -270,18 +271,19 @@ export default function InventoryReportsPage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
 
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-brand-purple">
-                    Manajemen Inventaris
-                </h1>
-                <button
-                    onClick={() => activeTab === 'requests' ? fetchReportData() : fetchItems()}
-                    className="flex items-center space-x-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                >
-                    <FiRefreshCw className="h-4 w-4" />
-                    <span>Refresh</span>
-                </button>
-            </div>
+            <PageHeader 
+                title="Laporan Inventaris" 
+                description="Monitor dan kelola inventaris sekolah"
+                actionButton={
+                    <button
+                        onClick={() => activeTab === 'requests' ? fetchReportData() : fetchItems()}
+                        className="flex items-center space-x-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                    >
+                        <FiRefreshCw className="h-4 w-4" />
+                        <span>Refresh</span>
+                    </button>
+                }
+            />
 
             {message.text && (
                 <div className={`rounded-md p-4 ${

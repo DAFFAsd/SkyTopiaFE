@@ -1,16 +1,18 @@
 // Centralized Report Viewer Page - Admin Dashboard (merged Daily + Semester)
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { 
     FiFileText, FiCalendar, FiFilter, FiLoader, FiUser, 
-    FiBookOpen, FiSmile, FiZap, FiMessageSquare, FiCoffee 
+    FiBookOpen, FiSmile, FiZap, FiMessageSquare, FiCoffee, FiArrowLeft 
 } from 'react-icons/fi';
 import { DailyReport, SemesterReport, Teacher } from '../types/report.types';
 import { Child } from '../types/child.types';
 import { getAllDailyReports, getAllSemesterReports } from '../services/reportService';
 import { getAllChildren } from '../services/childService';
 import SemesterReportsTab from '../components/SemesterReportsTab';
+import PageHeader from '../../../components/PageHeader';
 
 type TabType = 'daily' | 'semester';
 
@@ -87,11 +89,15 @@ export default function ReportsPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline">
+                <FiArrowLeft className="h-4 w-4" />
+                <span>Kembali ke Dasbor</span>
+            </Link>
             {/* Header */}
-            <div>
-                <h1 className="font-rammetto text-3xl text-brand-purple">Semua Laporan Anak Didik</h1>
-                <p className="text-gray-600 mt-1">Pantau aktivitas, perkembangan, dan kebahagiaan anak — termasuk laporan harian & semester.</p>
-            </div>
+            <PageHeader 
+                title="Semua Laporan" 
+                description="Pantau aktivitas, perkembangan, dan kebahagiaan anak — termasuk laporan harian & semester"
+            />
 
             {/* Summary Cards */}
             <div className="bg-gradient-to-br from-brand-purple/5 to-login-pink/5 rounded-xl p-6 border border-brand-purple/10">

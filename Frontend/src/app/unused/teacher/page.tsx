@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiMail, FiPhone, FiArrowLeft } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 
 interface Teacher {
   _id: string;
@@ -163,8 +164,8 @@ export default function TeacherPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Manajemen Guru</h1>
+      <div className="space-y-6">
+        <PageHeader title="Manajemen Guru" description="Kelola data guru" />
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
         </div>
@@ -178,7 +179,7 @@ export default function TeacherPage() {
         <FiArrowLeft className="h-4 w-4" />
         <span>Kembali ke Dasbor</span>
       </Link>
-      <h1 className="text-2xl font-bold text-brand-purple">Manajemen Guru</h1>
+      <PageHeader title="Manajemen Guru" description="Kelola data guru" />
 
       {/* Content */}
       <div className="flex justify-between items-center">

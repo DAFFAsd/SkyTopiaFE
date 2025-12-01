@@ -35,8 +35,9 @@ export function formatDateWithDay(dateString: string): string {
     });
 }
 
-export function formatTime(time: string): string {
-    // Remove seconds if present (HH:mm:ss -> HH:mm)
+export function formatTime(time?: string | null): string {
+    // Safely handle undefined/null and remove seconds (HH:mm:ss -> HH:mm)
+    if (!time || typeof time !== 'string') return '-';
     return time.replace(/:\d{2}$/, '');
 }
 

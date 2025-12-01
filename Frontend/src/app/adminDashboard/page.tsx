@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-    FiUsers, FiDatabase, FiCalendar, FiFileText, FiBarChart, 
+import {
+    FiUsers, FiDatabase, FiCalendar, FiFileText, FiBarChart,
     FiPackage, FiAlertTriangle, FiDollarSign, FiUser
 } from 'react-icons/fi';
 interface DashboardStats {
@@ -31,25 +30,25 @@ function DashboardCard({ title, children }: { title: string; children: React.Rea
 }
 
 // Button component for navigation items
-function DashboardButton({ 
-    title, 
-    href, 
-    icon: Icon, 
+function DashboardButton({
+    title,
+    href,
+    icon: Icon,
     description,
     variant = 'default'
-}: { 
-    title: string; 
-    href: string; 
-    icon: any; 
+}: {
+    title: string;
+    href: string;
+    icon: any;
     description?: string;
     variant?: 'default' | 'pink';
 }) {
-    const bgColor = variant === 'pink' 
-        ? 'from-stat-pink-bg/30 to-login-pink/20 hover:from-stat-pink-bg/50 hover:to-login-pink/30' 
+    const bgColor = variant === 'pink'
+        ? 'from-stat-pink-bg/30 to-login-pink/20 hover:from-stat-pink-bg/50 hover:to-login-pink/30'
         : 'from-stat-blue-bg/30 to-stat-pink-bg/30 hover:from-stat-blue-bg/50 hover:to-stat-pink-bg/50';
 
     return (
-        <Link 
+        <Link
             href={href}
             className={`group flex items-start space-x-3 p-4 rounded-lg bg-gradient-to-br ${bgColor} transition-all hover:scale-[1.02] border border-transparent hover:border-brand-purple/20`}
         >
@@ -71,18 +70,18 @@ function DashboardButton({
 }
 
 // Horizontal Statistics Card Component
-function StatCard({ 
-    icon: Icon, 
-    value, 
-    label, 
-    iconBgColor, 
-    iconColor 
-}: { 
-    icon: any; 
-    value: number | string; 
-    label: string; 
-    iconBgColor: string; 
-    iconColor: string; 
+function StatCard({
+    icon: Icon,
+    value,
+    label,
+    iconBgColor,
+    iconColor
+}: {
+    icon: any;
+    value: number | string;
+    label: string;
+    iconBgColor: string;
+    iconColor: string;
 }) {
     return (
         <div className="bg-white rounded-lg p-2.5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow h-full">
@@ -91,7 +90,7 @@ function StatCard({
                 <div className={`flex-shrink-0 ${iconBgColor} rounded-full p-1.5`}>
                     <Icon className={`h-4 w-4 ${iconColor}`} />
                 </div>
-                
+
                 {/* Right: Value and Label */}
                 <div className="flex-1 min-w-0">
                     <p className="text-xl font-bold text-brand-purple leading-tight">
@@ -159,7 +158,7 @@ export default function DashboardAdminPage() {
     const fetchDashboardStats = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -173,10 +172,10 @@ export default function DashboardAdminPage() {
 
             // Try to fetch from backend endpoint first
             try {
-                const response = await fetch(`${API}/users/dashboard/stats`, { 
-                    headers 
+                const response = await fetch(`${API}/users/dashboard/stats`, {
+                    headers
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && data.stats) {
@@ -281,7 +280,7 @@ export default function DashboardAdminPage() {
             const totalTeachers = usersArray.filter((u: any) => u && u.role === 'Teacher').length;
             const totalParents = usersArray.filter((u: any) => u && u.role === 'Parent').length;
             const totalUsers = usersArray.length;
-            
+
             // Get reports array and count today's reports (from consolidated or daily endpoint)
             let reportsArray = [] as any[];
             if (Array.isArray(reportsData)) {
@@ -312,7 +311,7 @@ export default function DashboardAdminPage() {
             } else if (requestsData?.data && Array.isArray(requestsData.data)) {
                 requestsArray = requestsData.data;
             }
-            const pendingRequests = requestsArray.filter((req: any) => 
+            const pendingRequests = requestsArray.filter((req: any) =>
                 req && (req.status === 'Pending' || req.status === 'pending')
             ).length;
 
@@ -344,7 +343,7 @@ export default function DashboardAdminPage() {
             console.error('Error fetching dashboard stats:', err);
             const errorMessage = err instanceof Error ? err.message : 'Gagal memuat statistik dashboard';
             setError(errorMessage);
-            
+
             // Set to 0 on error
             setStats({
                 totalChildren: 0,
@@ -381,7 +380,7 @@ export default function DashboardAdminPage() {
                 <h3 className="font-rammetto text-lg text-brand-purple mb-4">
                     Ringkasan Statistik
                 </h3>
-                
+
                 {error && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                         <p className="text-sm text-yellow-800">{error}</p>
@@ -398,21 +397,21 @@ export default function DashboardAdminPage() {
                         <StatCard
                             icon={FiUsers}
                             value={stats.totalChildren}
-                            label="Jumlah Anak Didik"
+                            label="Anak Didik"
                             iconBgColor="bg-blue-100"
                             iconColor="text-blue-600"
                         />
                         <StatCard
                             icon={FiUser}
                             value={stats.totalTeachers}
-                            label="Jumlah Guru"
+                            label="Guru"
                             iconBgColor="bg-green-100"
                             iconColor="text-green-600"
                         />
                         <StatCard
                             icon={FiUsers}
                             value={stats.totalParents}
-                            label="Jumlah Orang Tua"
+                            label="Orang Tua"
                             iconBgColor="bg-purple-100"
                             iconColor="text-purple-600"
                         />
@@ -443,11 +442,11 @@ export default function DashboardAdminPage() {
 
             {/* Main Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 {/* 1. Master Data Management */}
                 <DashboardCard title="Pengelolaan Data Utama">
                     <DashboardButton
-                        title="Informasi Anak"
+                        title="Data Anak"
                         href="/adminDashboard/children"
                         icon={FiUsers}
                         description="Kelola data anak didik"
@@ -459,16 +458,10 @@ export default function DashboardAdminPage() {
                         description="Kelola akun Guru & Orang Tua"
                     />
                     <DashboardButton
-                        title="Database Guru"
-                        href="/adminDashboard/database"
+                        title="Manajemen Guru"
+                        href="/adminDashboard/teaher-management"
                         icon={FiDatabase}
-                        description="Informasi detail guru"
-                    />
-                    <DashboardButton
-                        title="Kurikulum & Jadwal"
-                        href="/adminDashboard/curriculum"
-                        icon={FiCalendar}
-                        description="Atur kurikulum & jadwal"
+                        description="Database dan Absensi Guru"
                     />
                 </DashboardCard>
 
@@ -488,17 +481,10 @@ export default function DashboardAdminPage() {
                         description="Analisis permintaan"
                         variant="pink"
                     />
-                    <DashboardButton
-                        title="Kondisi Fasilitas"
-                        href="/adminDashboard/facility-report"
-                        icon={FiAlertTriangle}
-                        description="Laporan kondisi fasilitas"
-                        variant="pink"
-                    />
                 </DashboardCard>
 
-                {/* 3. Reports & Analytics */}
-                <DashboardCard title="Laporan & Analisis">
+                {/* 3. Reports & Financials */}
+                <DashboardCard title="Laporan dan Keuangan">
                     <DashboardButton
                         title="Semua Laporan"
                         href="/adminDashboard/reports"
@@ -506,15 +492,28 @@ export default function DashboardAdminPage() {
                         description="Pantau aktivitas, perkembangan, dan kebahagiaan anak, termasuk laporan harian & semester."
                         variant="pink"
                     />
-                </DashboardCard>
-
-                {/* 4. Financials */}
-                <DashboardCard title="Keuangan">
-                    <DashboardButton
+                <DashboardButton
                         title="Manajemen Tagihan"
                         href="/adminDashboard/billing"
                         icon={FiDollarSign}
                         description="Kelola pembayaran"
+                        variant="pink"
+                    />
+                </DashboardCard>
+
+                {/* 4. Curriculum & Schedule */}
+                <DashboardCard title="Jadwal dan Kurikulum">
+                    <DashboardButton
+                        title="Kegiatan Jadwal"
+                        href="/adminDashboard/schedule"
+                        icon={FiCalendar}
+                        description="Mengatur Jadwal Kegiatan"
+                    />
+                    <DashboardButton
+                        title="Kurikulum"
+                        href="/adminDashboard/curriculum"
+                        icon={FiCalendar}
+                        description="Mengatur Kurikulum"
                     />
                 </DashboardCard>
 

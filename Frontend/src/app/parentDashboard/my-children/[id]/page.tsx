@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import PageHeader from '../../components/PageHeader';
 import { FiArrowLeft, FiUser, FiCalendar, FiHeart, FiDollarSign, FiClock, FiMapPin, FiBook } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
+import { formatTime } from '../../utils/formatters';
 
 interface Teacher {
     _id: string;
@@ -119,9 +121,7 @@ export default function ChildDetailPage() {
         }).format(amount);
     };
 
-    const formatTime = (time: string) => {
-        return time.replace(/:\d{2}$/, '');
-    };
+    // use shared, null-safe formatTime from utils
 
     const dayOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
     const sortedSchedules = child?.schedules.sort((a, b) => {
@@ -131,13 +131,7 @@ export default function ChildDetailPage() {
     if (isLoading) {
         return (
             <div className="space-y-6">
-                <Link
-                    href="/parentDashboard/my-children"
-                    className="flex items-center space-x-2 text-sm text-brand-purple hover:underline"
-                >
-                    <FiArrowLeft className="h-4 w-4" />
-                    <span>Kembali ke Daftar Anak</span>
-                </Link>
+                <PageHeader backUrl="/parentDashboard/my-children" backLabel="Kembali ke Daftar Anak" title="Memuat Detail Anak" />
                 <div className="rounded-lg bg-white p-8 shadow-sm text-center">
                     <div className="text-gray-600">Memuat data anak...</div>
                 </div>
@@ -148,13 +142,7 @@ export default function ChildDetailPage() {
     if (error || !child) {
         return (
             <div className="space-y-6">
-                <Link
-                    href="/parentDashboard/my-children"
-                    className="flex items-center space-x-2 text-sm text-brand-purple hover:underline"
-                >
-                    <FiArrowLeft className="h-4 w-4" />
-                    <span>Kembali ke Daftar Anak</span>
-                </Link>
+                <PageHeader backUrl="/parentDashboard/my-children" backLabel="Kembali ke Daftar Anak" title="Data anak tidak ditemukan" />
                 <div className="rounded-lg bg-red-50 p-4 text-red-700">
                     {error || 'Data anak tidak ditemukan'}
                 </div>
@@ -164,17 +152,7 @@ export default function ChildDetailPage() {
 
     return (
         <div className="space-y-6">
-            <Link
-                href="/parentDashboard/my-children"
-                className="flex items-center space-x-2 text-sm text-brand-purple hover:underline"
-            >
-                <FiArrowLeft className="h-4 w-4" />
-                <span>Kembali ke Daftar Anak</span>
-            </Link>
-
-            <h1 className="text-3xl font-bold text-brand-purple">
-                Detail Anak: {child.name}
-            </h1>
+            <PageHeader backUrl="/parentDashboard/my-children" backLabel="Kembali ke Daftar Anak" title={`Detail Anak: ${child.name}`} />
 
             <div className="rounded-lg bg-white p-8 shadow-sm">
                 <div className="flex items-start space-x-6">

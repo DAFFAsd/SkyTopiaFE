@@ -26,10 +26,9 @@ type NavItem = { name: string; href: string; icon: IconType };
 const navItems: NavItem[] = [
     { name: 'Dashboard', href: '/adminDashboard', icon: FiHome },
     { name: 'Manajemen User', href: '/adminDashboard/users', icon: FiUsers },
+    { name: 'Manajemen Guru', href: '/adminDashboard/teacher-management', icon: FiDatabase },
     { name: 'Data Anak', href: '/adminDashboard/children', icon: FiSmile },
     { name: 'Semua Laporan', href: '/adminDashboard/reports', icon: FiFileText },
-    { name: 'Guru', href: '/adminDashboard/teacher', icon: FiDatabase },
-    { name: 'Absensi', href: '/adminDashboard/attendance', icon: FiCheckSquare },
     { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
     { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },

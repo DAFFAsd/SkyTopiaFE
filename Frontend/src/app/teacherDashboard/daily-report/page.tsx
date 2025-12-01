@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { 
     FiArrowLeft, FiSend, FiList, FiTrash2, FiLoader, FiBookOpen, 
     FiSunrise, FiMoon, FiFileText, FiHeart, FiActivity, FiUser, FiCoffee, FiCalendar
@@ -226,7 +227,7 @@ export default function DailyReportPage() {
                 <FiArrowLeft className="h-4 w-4" />
                 <span>Kembali ke Dasbor</span>
             </Link>
-            <h1 className="font-rammetto text-3xl font-bold text-brand-purple">Buat Laporan Harian</h1>
+            <PageHeader title="Buat Laporan Harian" description="Isi aktivitas dan perkembangan anak hari ini" />
 
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
                 <form onSubmit={handleSubmit} className="space-y-6">                    

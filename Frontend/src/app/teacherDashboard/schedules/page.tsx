@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { useState, useEffect } from 'react';
 import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiLoader, FiBook } from 'react-icons/fi';
 
@@ -158,7 +159,7 @@ export default function SchedulesPage() {
     if (loading) {
         return (
             <div className="space-y-4">
-                <h1 className="text-3xl font-bold text-brand-purple">Jadwal Saya</h1>
+                <PageHeader title="Jadwal & Kurikulum" description="Lihat agenda kegiatan dan materi ajar" />
                 <div className="flex justify-center items-center py-12">
                     <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
                 </div>
@@ -173,7 +174,7 @@ export default function SchedulesPage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
 
-            <h1 className="text-3xl font-bold text-brand-purple">Jadwal Saya</h1>
+            <PageHeader title="Jadwal & Kurikulum" description="Lihat agenda kegiatan dan materi ajar" />
 
             {error && (
                 <div className="rounded-lg bg-red-50 p-4 text-red-700">

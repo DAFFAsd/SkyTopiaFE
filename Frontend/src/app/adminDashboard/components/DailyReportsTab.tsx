@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiSearch, FiCalendar, FiFilter, FiX } from 'react-icons/fi';
+import { FiSearch, FiCalendar, FiFilter, FiX, FiTrash2 } from 'react-icons/fi';
 import { DailyReport } from '../types/report.types';
 import { Child } from '../types/child.types';
 
@@ -184,92 +184,20 @@ export default function DailyReportsTab({ reports, children, isLoading }: DailyR
                     </p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {currentItems.map((report) => (
-                        <div key={report._id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                            <div className="p-6">
-                                {/* Header */}
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-brand-purple">
-                                            {report.child_id.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">{formatDate(report.date)}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-medium text-gray-700">
-                                            Guru: {report.teacher_id.name}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Content Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Theme */}
-                                    {report.theme && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Tema</p>
-                                            <p className="text-sm text-gray-600">{report.theme}</p>
-                                            {report.sub_theme && (
-                                                <p className="text-xs text-gray-500">Sub-tema: {report.sub_theme}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Physical Motor */}
-                                    {report.physical_motor && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Fisik Motorik</p>
-                                            <p className="text-sm text-gray-600">{report.physical_motor}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Cognitive */}
-                                    {report.cognitive && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Kognitif</p>
-                                            <p className="text-sm text-gray-600">{report.cognitive}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Social Emotional */}
-                                    {report.social_emotional && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Sosial Emosional</p>
-                                            <p className="text-sm text-gray-600">{report.social_emotional}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Meals */}
-                                    {report.meals && (report.meals.snack || report.meals.lunch) && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Makanan</p>
-                                            {report.meals.snack && (
-                                                <p className="text-sm text-gray-600">Snack: {report.meals.snack}</p>
-                                            )}
-                                            {report.meals.lunch && (
-                                                <p className="text-sm text-gray-600">Makan Siang: {report.meals.lunch}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Nap Duration */}
-                                    {report.nap_duration && (
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-700">Durasi Tidur Siang</p>
-                                            <p className="text-sm text-gray-600">{report.nap_duration}</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Special Notes */}
-                                {report.special_notes && (
-                                    <div className="mt-4 pt-4 border-t">
-                                        <p className="text-sm font-semibold text-gray-700">Catatan Khusus</p>
-                                        <p className="text-sm text-gray-600 mt-1">{report.special_notes}</p>
-                                    </div>
-                                )}
+                        <div key={report._id} className="rounded-lg border border-gray-200 p-4 flex items-center justify-between bg-white">
+                            <div>
+                                <h3 className="font-semibold text-brand-purple">{report.child_id.name}</h3>
+                                <p className="text-sm text-gray-600">{formatDate(report.date)}</p>
+                                <p className="text-xs text-gray-500 mt-1">Tema: {report.theme || '-'}</p>
                             </div>
+                            <button
+                                className="p-2 text-red-500 hover:bg-red-100 rounded-full transition-colors"
+                                title="Hapus laporan"
+                            >
+                                <FiTrash2 className="h-5 w-5" />
+                            </button>
                         </div>
                     ))}
                 </div>

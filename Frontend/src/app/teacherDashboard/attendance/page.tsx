@@ -1,361 +1,338 @@
-'use client';
+"use client";
 
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
+import { FiArrowLeft, FiCheck, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
-import { FiLoader, FiDownload, FiFilter,  FiArrowLeft } from 'react-icons/fi';
 
-interface AttendanceRecord {
-    _id: string;
-    teacher: {
-        _id: string;
-        name: string;
-        email: string;
-    };
-    date: string;
+interface ClockRecord {
     status: 'Present' | 'Absent' | 'Leave';
+    timestamp?: string;
     note?: string;
-    createdAt: string;
-    }
+    leavePhoto?: string;
+}
 
-    interface Teacher {
+interface Attendance {
     _id: string;
-    name: string;
-    email: string;
-    }
+    date: string;
+    clockIn: ClockRecord;
+    clockOut?: ClockRecord;
+}
 
-    export default function AttendancePage() {
-    const [records, setRecords] = useState<AttendanceRecord[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
-    // Filter states
-    const [selectedTeacher, setSelectedTeacher] = useState<string>('all');
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
-    const [selectedStatus, setSelectedStatus] = useState<string>('all');
+export default function AttendancePage() {
+    const [status, setStatus] = useState<'Present' | 'Absent' | 'Leave'>('Present');
+    const [note, setNote] = useState('');
+    const [clockOutNote, setClockOutNote] = useState('');
+    const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
+    const [isSubmittingIn, setIsSubmittingIn] = useState(false);
+    const [isSubmittingOut, setIsSubmittingOut] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
+    const today = new Date().toISOString().split('T')[0];
+    const todayAttendance = attendanceHistory.find((record) => record.date.split('T')[0] === today);
+    const hasClockIn = Boolean(todayAttendance?.clockIn?.timestamp);
+    const hasClockOut = Boolean(todayAttendance?.clockOut?.timestamp);
 
     useEffect(() => {
-        fetchTeachers();
-        fetchAttendance();
+        fetchAttendanceHistory();
     }, []);
 
-    const fetchTeachers = async () => {
+    const fetchAttendanceHistory = async () => {
         try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setMessage({ type: 'error', text: 'Token tidak ditemukan. Silakan login kembali' });
+                return;
+            }
 
-        const response = await fetch('http://localhost:3000/api/users?role=Teacher', {
-            headers: {
-            'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        const data = await response.json();
-        if (response.ok && data.success) {
-            setTeachers(data.users || []);
-        }
-        } catch (err) {
-        console.error('Failed to fetch teachers:', err);
+            const response = await fetch('/api/attendances/my-records', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setAttendanceHistory(data.records);
+            } else {
+                setMessage({ type: 'error', text: data.message || 'Gagal memuat riwayat absensi' });
+            }
+        } catch (error) {
+            console.error('Error fetching attendance history:', error);
+            setMessage({ type: 'error', text: 'Terjadi kesalahan saat memuat riwayat absensi' });
         }
     };
 
-    const fetchAttendance = async (tId?: string, sDate?: string, eDate?: string) => {
-        try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
 
-        const params = new URLSearchParams();
-        if (tId && tId !== 'all') params.append('teacherId', tId);
-        if (sDate) params.append('startDate', sDate);
-        if (eDate) params.append('endDate', eDate);
+    const handleClockIn = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmittingIn(true);
+        setMessage({ type: '', text: '' });
 
-        const response = await fetch(`http://localhost:3000/api/attendance?${params.toString()}`, {
-            headers: {
-            'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        const data = await response.json();
-        if (response.ok && data.success) {
-            setRecords(data.records || []);
+        if (hasClockIn) {
+            setMessage({ type: 'error', text: 'Clock in hanya bisa dilakukan sekali per hari.' });
+            setIsSubmittingIn(false);
+            return;
         }
-        } catch (err) {
-        console.error('Failed to fetch attendance:', err);
-        setError('Gagal mengambil data absensi');
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setMessage({ type: 'error', text: 'Token tidak ditemukan. Silakan login kembali' });
+                setIsSubmittingIn(false);
+                return;
+            }
+
+            const response = await fetch('/api/attendances/clock-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    status,
+                    note,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setMessage({ type: 'success', text: 'Clock in berhasil! Jam masuk tercatat.' });
+                setNote('');
+                setStatus('Present');
+                fetchAttendanceHistory();
+            } else {
+                setMessage({ type: 'error', text: data.message || 'Terjadi kesalahan' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Terjadi kesalahan saat clock in' });
         } finally {
-        setLoading(false);
+            setIsSubmittingIn(false);
         }
     };
 
-    const handleFilter = () => {
-        fetchAttendance(selectedTeacher, startDate, endDate);
-    };
+    const handleClockOut = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmittingOut(true);
+        setMessage({ type: '', text: '' });
 
-    const handleReset = () => {
-        setSelectedTeacher('all');
-        setStartDate('');
-        setEndDate('');
-        setSelectedStatus('all');
-        fetchAttendance();
-    };
-
-    const filteredRecords = records.filter(record => {
-        if (selectedStatus !== 'all' && record.status !== selectedStatus) {
-        return false;
+        if (!hasClockIn) {
+            setMessage({ type: 'error', text: 'Silakan lakukan clock in terlebih dahulu.' });
+            setIsSubmittingOut(false);
+            return;
         }
-        return true;
-    });
 
-    const getStatusBadgeColor = (status: string) => {
-        switch (status) {
-        case 'Present':
-            return 'bg-green-100 text-green-800';
-        case 'Absent':
-            return 'bg-red-100 text-red-800';
-        case 'Leave':
-            return 'bg-yellow-100 text-yellow-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
+        if (hasClockOut) {
+            setMessage({ type: 'error', text: 'Clock out hari ini sudah tercatat.' });
+            setIsSubmittingOut(false);
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setMessage({ type: 'error', text: 'Token tidak ditemukan. Silakan login kembali' });
+                setIsSubmittingOut(false);
+                return;
+            }
+
+            const response = await fetch('/api/attendances/clock-out', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    status: 'Present',
+                    note: clockOutNote,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setMessage({ type: 'success', text: 'Clock out berhasil! Jam pulang tercatat.' });
+                setClockOutNote('');
+                fetchAttendanceHistory();
+            } else {
+                setMessage({ type: 'error', text: data.message || 'Terjadi kesalahan' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Terjadi kesalahan saat clock out' });
+        } finally {
+            setIsSubmittingOut(false);
         }
     };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-        case 'Present':
-            return 'Hadir';
-        case 'Absent':
-            return 'Absen';
-        case 'Leave':
-            return 'Cuti';
-        default:
-            return status;
-        }
-    };
-
-    const exportToCSV = () => {
-        const headers = ['Nama Guru', 'Email', 'Tanggal', 'Status', 'Catatan'];
-        const rows = filteredRecords.map(record => [
-        record.teacher.name,
-        record.teacher.email,
-        new Date(record.date).toLocaleDateString('id-ID'),
-        getStatusLabel(record.status),
-        record.note || '-'
-        ]);
-
-        const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `absensi-guru-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-    };
-
-    const statistics = {
-        total: filteredRecords.length,
-        present: filteredRecords.filter(r => r.status === 'Present').length,
-        absent: filteredRecords.filter(r => r.status === 'Absent').length,
-        leave: filteredRecords.filter(r => r.status === 'Leave').length,
-    };
-
-    if (loading) {
-        return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-brand-purple">Absensi Guru</h1>
-            <div className="flex justify-center items-center py-8">
-            <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
-            </div>
-        </div>
-        );
-    }
 
     return (
-        <div className="space-y-4">
-        <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
-            <FiArrowLeft className="h-4 w-4" />
-            <span>Kembali ke Dasbor</span>
-        </Link>
-        <h1 className="text-2xl font-bold text-brand-purple">Absensi Guru</h1>
+        <div className="space-y-6">
+            <Link href="/teacherDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline">
+                <FiArrowLeft className="h-4 w-4" />
+                <span>Kembali ke Dasbor</span>
+            </Link>
+            <PageHeader title="Catat Absensi" description="Catat kehadiran harian Anda" />
 
-        {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-            </div>
-        )}
+            {/* Clock In Section */}
+            <div className="rounded-lg bg-white p-8 shadow-sm">
+                <h2 className="mb-6 text-xl font-semibold text-gray-900">Jam Masuk</h2>
+                <form onSubmit={handleClockIn} className="space-y-4">
+                    <div>
+                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                            Status Kehadiran
+                        </label>
+                        <select
+                            id="status"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as 'Present' | 'Absent' | 'Leave')}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
+                            required
+                        >
+                            <option value="Present">Hadir</option>
+                            <option value="Absent">Tidak Hadir</option>
+                            <option value="Leave">Izin</option>
+                        </select>
+                    </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-            <p className="text-sm text-gray-600">Total Absensi</p>
-            <p className="text-2xl font-bold text-gray-900">{statistics.total}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-            <p className="text-sm text-gray-600">Hadir</p>
-            <p className="text-2xl font-bold text-green-600">{statistics.present}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
-            <p className="text-sm text-gray-600">Absen</p>
-            <p className="text-2xl font-bold text-red-600">{statistics.absent}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
-            <p className="text-sm text-gray-600">Cuti</p>
-            <p className="text-2xl font-bold text-yellow-600">{statistics.leave}</p>
-            </div>
-        </div>
+                    <div>
+                        <label htmlFor="note" className="block text-sm font-medium text-gray-700">
+                            Catatan (Opsional)
+                        </label>
+                        <textarea
+                            id="note"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
+                            rows={2}
+                            placeholder="Tambahkan catatan jika diperlukan"
+                        />
+                    </div>
 
-        {/* Filter Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                <FiFilter className="h-5 w-5" />
-                <span>Filter Data</span>
-            </h3>
-            <button
-                onClick={handleReset}
-                className="text-sm text-blue-600 hover:text-blue-900"
-            >
-                Reset Filter
-            </button>
-            </div>
+                    {message.text && (
+                        <div className={`rounded-md p-4 ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                            {message.text}
+                        </div>
+                    )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                Guru
-                </label>
-                <select
-                value={selectedTeacher}
-                onChange={(e) => setSelectedTeacher(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                >
-                <option value="all">Semua Guru</option>
-                {teachers.map(teacher => (
-                    <option key={teacher._id} value={teacher._id}>
-                    {teacher.name}
-                    </option>
-                ))}
-                </select>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-                </label>
-                <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                >
-                <option value="all">Semua Status</option>
-                <option value="Present">Hadir</option>
-                <option value="Absent">Absen</option>
-                <option value="Leave">Cuti</option>
-                </select>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dari Tanggal
-                </label>
-                <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sampai Tanggal
-                </label>
-                <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-purple"
-                />
-            </div>
-            </div>
-
-            <div className="flex gap-2">
-            <button
-                onClick={handleFilter}
-                className="bg-brand-purple text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition"
-            >
-                Terapkan Filter
-            </button>
-            <button
-                onClick={exportToCSV}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition flex items-center space-x-2"
-            >
-                <FiDownload className="h-4 w-4" />
-                <span>Export CSV</span>
-            </button>
-            </div>
-        </div>
-
-        {/* Attendance Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-                <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nama Guru
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tanggal
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Catatan
-                </th>
-                </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRecords.length > 0 ? (
-                filteredRecords.map((record) => (
-                    <tr key={record._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {record.teacher.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.teacher.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(record.date).toLocaleDateString('id-ID', {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                        })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(record.status)}`}>
-                        {getStatusLabel(record.status)}
-                        </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                        {record.note || '-'}
-                    </td>
-                    </tr>
-                ))
-                ) : (
-                <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Tidak ada data absensi
-                    </td>
-                </tr>
+                    <button
+                        type="submit"
+                        disabled={isSubmittingIn || hasClockIn}
+                        className="w-full flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                        <FiCheck className="h-5 w-5" />
+                        {isSubmittingIn ? 'Menyimpan...' : hasClockIn ? 'Sudah Clock In' : 'Clock In'}
+                    </button>
+                </form>
+                {todayAttendance?.clockIn && (
+                    <div className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
+                        ✓ Jam masuk: {new Date(todayAttendance.clockIn.timestamp!).toLocaleTimeString('id-ID')}
+                    </div>
                 )}
-            </tbody>
-            </table>
-        </div>
+            </div>
+
+            {/* Clock Out Section */}
+            <div className="rounded-lg bg-white p-8 shadow-sm">
+                <h2 className="mb-6 text-xl font-semibold text-gray-900">Jam Pulang</h2>
+                <form onSubmit={handleClockOut} className="space-y-4">
+                    <div>
+                        <label htmlFor="clockOutNote" className="block text-sm font-medium text-gray-700">
+                            Catatan (Opsional)
+                        </label>
+                        <textarea
+                            id="clockOutNote"
+                            value={clockOutNote}
+                            onChange={(e) => setClockOutNote(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
+                            rows={2}
+                            placeholder="Tambahkan catatan jika diperlukan"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isSubmittingOut || !hasClockIn || hasClockOut}
+                        className="w-full flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                        <FiX className="h-5 w-5" />
+                        {isSubmittingOut ? 'Menyimpan...' : !hasClockIn ? 'Clock In Dulu' : hasClockOut ? 'Sudah Clock Out' : 'Clock Out'}
+                    </button>
+                </form>
+                {todayAttendance?.clockOut && (
+                    <div className="mt-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+                        ✓ Jam pulang: {new Date(todayAttendance.clockOut.timestamp!).toLocaleTimeString('id-ID')}
+                    </div>
+                )}
+            </div>
+
+            {/* Attendance History */}
+            <div className="rounded-lg bg-white p-8 shadow-sm">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Riwayat Absensi</h2>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tanggal</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Masuk</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Pulang</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 bg-white">
+                            {attendanceHistory.map((record) => (
+                                <tr key={record._id}>
+                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                        {new Date(record.date).toLocaleDateString('id-ID')}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <div className="flex flex-col gap-1">
+                                            <span className={`inline-flex w-fit rounded-full px-2 text-xs font-semibold leading-5 ${record.clockIn.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                                    record.clockIn.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                                        'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                {record.clockIn.status === 'Present' ? 'Hadir' :
+                                                    record.clockIn.status === 'Absent' ? 'Tidak Hadir' : 'Izin'}
+                                            </span>
+                                            {record.clockIn.timestamp && (
+                                                <span className="text-xs text-gray-500">
+                                                    {new Date(record.clockIn.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        {record.clockOut ? (
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`inline-flex w-fit rounded-full px-2 text-xs font-semibold leading-5 ${record.clockOut.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                                        record.clockOut.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                    {record.clockOut.status === 'Present' ? 'Hadir' :
+                                                        record.clockOut.status === 'Absent' ? 'Tidak Hadir' : 'Izin'}
+                                                </span>
+                                                {record.clockOut.timestamp && (
+                                                    <span className="text-xs text-gray-500">
+                                                        {new Date(record.clockOut.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                        {record.clockIn.note || '-'}
+                                    </td>
+                                </tr>
+                            ))}
+                            {attendanceHistory.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                                        Tidak ada riwayat absensi
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 }

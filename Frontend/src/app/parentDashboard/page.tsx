@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import PaymentChart from './components/PaymentChart';
+import PageHeader from './components/PageHeader';
 
 type Child = {
     _id: string;
@@ -131,9 +132,9 @@ export default function ParentDashboardPage() {
         <div className="space-y-8 pb-10">
             <div className="relative rounded-xl shadow-sm border border-yellow-200 bg-welcome-yellow p-6 md:p-8 overflow-hidden">
                 <div className="relative z-10 max-w-lg">
-                    <h3 className="font-semibold text-2xl md:text-3xl text-brand-purple">
-                        Halo, {user?.name || 'Orang Tua'}! 
-                    </h3>
+                    <h1 className="font-rammetto text-3xl text-brand-purple mb-2">
+                        Halo, {user?.name || 'Orang Tua'}! 👋
+                    </h1>
                     <p className="mt-2 text-sm md:text-base text-brand-purple/90 leading-relaxed">
                         Selamat datang di SkyTopia. Pantau semua aktivitas, laporan, dan perkembangan buah hati Anda di sini.
                     </p>
@@ -149,29 +150,32 @@ export default function ParentDashboardPage() {
             </div>
 
             <div className="animate-fade-in-up">
-                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">Anak Anda</h3>
+                <h2 className="font-rammetto text-xl text-brand-purple mb-4">
+                    Anak Anda
+                </h2>
                 {children.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {children.map((child) => (
-                    <ChildCard
-                        key={child._id}
-                        name={child.name}
-                        href={`/parentDashboard/my-children/${child._id}`} 
-                    />
-                    ))}
-                </div>
+                    <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {children.map((child) => (
+                            <ChildCard
+                                key={child._id}
+                                name={child.name}
+                                href={`/parentDashboard/my-children/${child._id}`} 
+                            />
+                        ))}
+                    </div>
                 ) : (
-                <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                    <p className="text-gray-500">Belum ada data anak yang terdaftar.</p>
-                </div>
+                    <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                        <p className="text-gray-500">Belum ada data anak yang terdaftar.</p>
+                    </div>
                 )}
             </div>
 
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">Fitur Utama</h3>
+                <h2 className="font-rammetto text-xl text-brand-purple mb-4">
+                    Fitur Utama
+                </h2>
                 
                 <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    
                     <FeatureCard
                         title="Laporan Harian"
                         href="/parentDashboard/daily-reports"
@@ -200,15 +204,14 @@ export default function ParentDashboardPage() {
                         color="bg-stat-blue-bg/50"
                         iconColor="text-sky-500"
                     />
-                    
                 </div>
             </div>
             
             {/* Payment Chart */}
             <div className="pt-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <h3 className="font-rammetto text-xl md:text-2xl font-bold text-brand-purple mb-4">
+                <h2 className="font-rammetto text-xl text-brand-purple mb-4">
                     Ringkasan Pembayaran Tahunan
-                </h3>
+                </h2>
                 <div className="bg-white rounded-xl shadow-md border border-gray-200">
                     <PaymentChart /> 
                 </div>

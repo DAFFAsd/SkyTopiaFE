@@ -1,12 +1,14 @@
 // Users Management Page - Admin Dashboard
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiUsers, FiUser } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiUsers, FiUser, FiArrowLeft } from 'react-icons/fi';
 import { User, UserFormData, UserRole } from '../types/user.types';
 import { getAllUsers, createUser, updateUser, deleteUser } from '../services/userService';
 import UserFormModal from '../components/UserFormModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import PageHeader from '../../../components/PageHeader';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -211,6 +213,10 @@ export default function UsersPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+                <FiArrowLeft className="h-4 w-4" />
+                <span>Kembali ke Dasbor</span>
+            </Link>
             {/* Success Message */}
             {successMessage && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-2">
@@ -224,19 +230,19 @@ export default function UsersPage() {
             )}
 
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-brand-purple">Manajemen Pengguna</h1>
-                    <p className="text-gray-600 mt-1">Kelola akun Guru dan Orang Tua</p>
-                </div>
-                <button
-                    onClick={handleAddUser}
-                    className="flex items-center space-x-2 px-4 py-2 bg-brand-purple text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                    <FiPlus className="h-5 w-5" />
-                    <span>Tambah Pengguna</span>
-                </button>
-            </div>
+            <PageHeader 
+                title="Manajemen Pengguna" 
+                description="Kelola akun Guru dan Orang Tua"
+                actionButton={
+                    <button
+                        onClick={handleAddUser}
+                        className="flex items-center space-x-2 px-4 py-2 bg-brand-purple text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                        <FiPlus className="h-5 w-5" />
+                        <span>Tambah Pengguna</span>
+                    </button>
+                }
+            />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

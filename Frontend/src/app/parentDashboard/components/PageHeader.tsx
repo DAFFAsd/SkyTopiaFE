@@ -19,7 +19,7 @@ export default function PageHeader({
                 <FiArrowLeft className="h-4 w-4" />
                 <span>{backLabel}</span>
             </Link>
-            <h1 className="text-3xl font-bold text-brand-purple">{title}</h1>
+            <h1 className="font-rammetto text-3xl text-brand-purple mb-4">{title}</h1>
         </div>
     );
 }

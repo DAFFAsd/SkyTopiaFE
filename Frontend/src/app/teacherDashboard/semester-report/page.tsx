@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { useRouter } from 'next/navigation';
 import {
     FiArrowLeft, FiSend, FiStar, FiHeart, FiCpu, FiMessageCircle,
@@ -386,9 +387,7 @@ import {
             <span>Kembali ke Dasbor</span>
         </Link>
 
-        <h1 className="font-rammetto text-3xl font-bold text-brand-purple">
-            Buat Laporan Semester
-        </h1>
+        <PageHeader title="Buat Laporan Semester" description="Evaluasi perkembangan anak semester ini" />
         
         <form onSubmit={handleSubmit}>
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 mb-6">

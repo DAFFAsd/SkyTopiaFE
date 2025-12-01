@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiArrowLeft, FiUser, FiCalendar, FiHeart } from 'react-icons/fi';
+import PageHeader from '../components/PageHeader';
 
 interface Schedule {
     _id: string;
@@ -89,17 +90,7 @@ export default function MyChildrenPage() {
 
     return (
         <div className="space-y-6">
-            <Link
-                href="/parentDashboard"
-                className="flex items-center space-x-2 text-sm text-brand-purple hover:underline"
-            >
-                <FiArrowLeft className="h-4 w-4" />
-                <span>Kembali ke Dasbor</span>
-            </Link>
-
-            <h1 className="text-3xl font-bold text-brand-purple">
-                Anak Saya
-            </h1>
+            <PageHeader title="Anak Saya" />
 
             {error && (
                 <div className="rounded-lg bg-red-50 p-4 text-red-700">
