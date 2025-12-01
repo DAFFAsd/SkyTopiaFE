@@ -1,8 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { FiArrowLeft, FiCheck, FiX } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { FiArrowLeft, FiCheck, FiX, FiCamera } from 'react-icons/fi';
+import { useState, useEffect, useRef } from 'react';
 
 interface ClockRecord {
     status: 'Present' | 'Absent' | 'Leave';
@@ -19,13 +19,15 @@ interface Attendance {
 }
 
 export default function AttendancePage() {
-    const [status, setStatus] = useState<'Present' | 'Absent' | 'Leave'>('Present');
+    const [status, setStatus] = useState<'Present' | 'Leave'>('Present');
     const [note, setNote] = useState('');
-    const [clockOutNote, setClockOutNote] = useState('');
+    const [leavePhoto, setLeavePhoto] = useState<File | null>(null);
+    const [leavePhotoPreview, setLeavePhotoPreview] = useState<string>('');
     const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
     const [isSubmittingIn, setIsSubmittingIn] = useState(false);
     const [isSubmittingOut, setIsSubmittingOut] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const today = new Date().toISOString().split('T')[0];
     const todayAttendance = attendanceHistory.find((record) => record.date.split('T')[0] === today);
     const hasClockIn = Boolean(todayAttendance?.clockIn?.timestamp);
@@ -34,6 +36,35 @@ export default function AttendancePage() {
     useEffect(() => {
         fetchAttendanceHistory();
     }, []);
+
+    const uploadPhotoToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'skytopia');
+
+        try {
+            const response = await fetch('https://api.cloudinary.com/v1_1/dxq8ydbtk/image/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            return data.secure_url;
+        } catch (error) {
+            throw new Error('Gagal mengupload foto');
+        }
+    };
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setLeavePhoto(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLeavePhotoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const fetchAttendanceHistory = async () => {
         try {
@@ -72,12 +103,23 @@ export default function AttendancePage() {
             return;
         }
 
+        if (status === 'Leave' && !leavePhoto) {
+            setMessage({ type: 'error', text: 'Foto izin wajib diupload' });
+            setIsSubmittingIn(false);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 setMessage({ type: 'error', text: 'Token tidak ditemukan. Silakan login kembali' });
                 setIsSubmittingIn(false);
                 return;
+            }
+
+            let photoUrl = '';
+            if (status === 'Leave' && leavePhoto) {
+                photoUrl = await uploadPhotoToCloudinary(leavePhoto);
             }
 
             const response = await fetch('/api/attendances/clock-in', {
@@ -88,7 +130,8 @@ export default function AttendancePage() {
                 },
                 body: JSON.stringify({
                     status,
-                    note,
+                    note: status === 'Leave' ? note : '',
+                    leavePhoto: photoUrl,
                 }),
             });
 
@@ -97,13 +140,15 @@ export default function AttendancePage() {
             if (data.success) {
                 setMessage({ type: 'success', text: 'Clock in berhasil! Jam masuk tercatat.' });
                 setNote('');
+                setLeavePhoto(null);
+                setLeavePhotoPreview('');
                 setStatus('Present');
                 fetchAttendanceHistory();
             } else {
                 setMessage({ type: 'error', text: data.message || 'Terjadi kesalahan' });
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'Terjadi kesalahan saat clock in' });
+            setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Terjadi kesalahan saat clock in' });
         } finally {
             setIsSubmittingIn(false);
         }
@@ -113,18 +158,6 @@ export default function AttendancePage() {
         e.preventDefault();
         setIsSubmittingOut(true);
         setMessage({ type: '', text: '' });
-
-        if (!hasClockIn) {
-            setMessage({ type: 'error', text: 'Silakan lakukan clock in terlebih dahulu.' });
-            setIsSubmittingOut(false);
-            return;
-        }
-
-        if (hasClockOut) {
-            setMessage({ type: 'error', text: 'Clock out hari ini sudah tercatat.' });
-            setIsSubmittingOut(false);
-            return;
-        }
 
         try {
             const token = localStorage.getItem('token');
@@ -142,7 +175,7 @@ export default function AttendancePage() {
                 },
                 body: JSON.stringify({
                     status: 'Present',
-                    note: clockOutNote,
+                    note: '',
                 }),
             });
 
@@ -150,7 +183,6 @@ export default function AttendancePage() {
 
             if (data.success) {
                 setMessage({ type: 'success', text: 'Clock out berhasil! Jam pulang tercatat.' });
-                setClockOutNote('');
                 fetchAttendanceHistory();
             } else {
                 setMessage({ type: 'error', text: data.message || 'Terjadi kesalahan' });
@@ -169,94 +201,128 @@ export default function AttendancePage() {
                 <span>Kembali ke Dasbor</span>
             </Link>
             <h1 className="text-3xl font-bold text-brand-purple">Catat Absensi</h1>
-            
-            {/* Clock In Section */}
-            <div className="rounded-lg bg-white p-8 shadow-sm">
-                <h2 className="mb-6 text-xl font-semibold text-gray-900">Jam Masuk</h2>
-                <form onSubmit={handleClockIn} className="space-y-4">
-                    <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                            Status Kehadiran
-                        </label>
-                        <select
-                            id="status"
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value as 'Present' | 'Absent' | 'Leave')}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
-                            required
-                        >
-                            <option value="Present">Hadir</option>
-                            <option value="Absent">Tidak Hadir</option>
-                            <option value="Leave">Izin</option>
-                        </select>
-                    </div>
 
-                    <div>
-                        <label htmlFor="note" className="block text-sm font-medium text-gray-700">
-                            Catatan (Opsional)
-                        </label>
-                        <textarea
-                            id="note"
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
-                            rows={2}
-                            placeholder="Tambahkan catatan jika diperlukan"
-                        />
-                    </div>
+            {/* Global Message Notification */}
+            {message.text && (
+                <div className={`rounded-md p-4 ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    {message.text}
+                </div>
+            )}
+            {/* Clock In & Clock Out Combined Section */}
+            <div className="rounded-lg bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900">Pencatatan Absensi</h2>
 
-                    {message.text && (
-                        <div className={`rounded-md p-4 ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                            {message.text}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={isSubmittingIn || hasClockIn}
-                        className="w-full flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-50"
+                {/* Status Selection */}
+                <div className="mb-4">
+                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                        Status
+                    </label>
+                    <select
+                        id="status"
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value as 'Present' | 'Leave')}
+                        className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-purple focus:ring-brand-purple"
+                        required
                     >
-                        <FiCheck className="h-5 w-5" />
-                        {isSubmittingIn ? 'Menyimpan...' : hasClockIn ? 'Sudah Clock In' : 'Clock In'}
+                        <option value="Present">Hadir</option>
+                        <option value="Leave">Izin</option>
+                    </select>
+                </div>
+
+                {/* Leave Photo & Note - Only show for Leave */}
+                {status === 'Leave' && (
+                    <>
+                        <div className="mb-4">
+                            <label htmlFor="leavePhoto" className="block text-sm font-medium text-gray-700">
+                                Foto Izin
+                            </label>
+                            <div className="mt-1 flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-1 rounded-md border-2 border-dashed border-brand-purple px-3 py-2 text-sm text-brand-purple hover:bg-brand-purple/5"
+                                >
+                                    <FiCamera className="h-4 w-4" />
+                                    Pilih
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    id="leavePhoto"
+                                    accept="image/*"
+                                    onChange={handlePhotoChange}
+                                    className="hidden"
+                                    required
+                                />
+                                {leavePhotoPreview && (
+                                    <div className="h-10 w-10 overflow-hidden rounded-md">
+                                        <img src={leavePhotoPreview} alt="Preview" className="h-full w-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
+                            {leavePhoto && <p className="mt-1 text-xs text-green-600">✓ {leavePhoto.name}</p>}
+                        </div>
+                        <div className="mb-4">
+                            <label htmlFor="note" className="block text-sm font-medium text-gray-700">
+                                Catatan
+                            </label>
+                            <textarea
+                                id="note"
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-purple focus:ring-brand-purple"
+                                rows={2}
+                                placeholder="Alasan izin"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Clock In & Clock Out Buttons - Side by side for Hadir */}
+                {status === 'Leave' ? (
+                    <button
+                        type="button"
+                        onClick={handleClockIn}
+                        disabled={isSubmittingIn || hasClockIn}
+                        className="w-full flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                        <FiCheck className="h-4 w-4" />
+                        {isSubmittingIn ? 'Menyimpan...' : hasClockIn ? 'Sudah Submit Izin' : 'Submit Izin'}
                     </button>
-                </form>
-                {todayAttendance?.clockIn && (
-                    <div className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
-                        ✓ Jam masuk: {new Date(todayAttendance.clockIn.timestamp!).toLocaleTimeString('id-ID')}
+                ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={handleClockIn}
+                            disabled={isSubmittingIn || hasClockIn}
+                            className="flex items-center justify-center gap-1 rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-50"
+                        >
+                            <FiCheck className="h-4 w-4" />
+                            {isSubmittingIn ? 'Masuk...' : hasClockIn ? 'Masuk' : 'Datang'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleClockOut}
+                            disabled={isSubmittingOut}
+                            className="flex items-center justify-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50"
+                        >
+                            <FiX className="h-4 w-4" />
+                            {isSubmittingOut ? 'Pulang...' : hasClockOut ? 'Pulang' : 'Pulang'}
+                        </button>
                     </div>
                 )}
-            </div>
 
-            {/* Clock Out Section */}
-            <div className="rounded-lg bg-white p-8 shadow-sm">
-                <h2 className="mb-6 text-xl font-semibold text-gray-900">Jam Pulang</h2>
-                <form onSubmit={handleClockOut} className="space-y-4">
-                    <div>
-                        <label htmlFor="clockOutNote" className="block text-sm font-medium text-gray-700">
-                            Catatan (Opsional)
-                        </label>
-                        <textarea
-                            id="clockOutNote"
-                            value={clockOutNote}
-                            onChange={(e) => setClockOutNote(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-purple focus:ring-brand-purple"
-                            rows={2}
-                            placeholder="Tambahkan catatan jika diperlukan"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isSubmittingOut || !hasClockIn || hasClockOut}
-                        className="w-full flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50"
-                    >
-                        <FiX className="h-5 w-5" />
-                        {isSubmittingOut ? 'Menyimpan...' : !hasClockIn ? 'Clock In Dulu' : hasClockOut ? 'Sudah Clock Out' : 'Clock Out'}
-                    </button>
-                </form>
-                {todayAttendance?.clockOut && (
-                    <div className="mt-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-                        ✓ Jam pulang: {new Date(todayAttendance.clockOut.timestamp!).toLocaleTimeString('id-ID')}
+                {/* Status Display */}
+                {todayAttendance?.clockIn && (
+                    <div className="mt-3 flex gap-2 text-xs">
+                        <div className="rounded-md bg-green-50 p-2 flex-1 text-green-700">
+                            ✓ Masuk: {new Date(todayAttendance.clockIn.timestamp!).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        {todayAttendance?.clockOut && (
+                            <div className="rounded-md bg-blue-50 p-2 flex-1 text-blue-700">
+                                ✓ Pulang: {new Date(todayAttendance.clockOut.timestamp!).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
