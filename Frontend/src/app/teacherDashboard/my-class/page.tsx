@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { FiArrowLeft, FiUser, FiLoader } from 'react-icons/fi';
 
 // Tipe data buat 'getAllChildren'
@@ -84,9 +85,7 @@ interface Schedule {
             <span>Kembali ke Dasbor</span>
         </Link>
 
-        <h1 className="font-rammetto text-3xl font-bold text-brand-purple">
-            Anak Didik Saya
-        </h1>
+        <PageHeader title="Anak Didik Saya" description="Daftar siswa di kelas Anda" />
 
         {error && (
             <div className="rounded-lg bg-red-50 p-4 text-red-700">{error}</div>

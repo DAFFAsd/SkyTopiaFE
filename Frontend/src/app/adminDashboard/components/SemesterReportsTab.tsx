@@ -2,7 +2,7 @@
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiX, FiEye } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiX, FiEye, FiStar, FiHeart, FiCpu, FiMessageCircle, FiActivity, FiEdit2, FiShield, FiPenTool, FiFileText } from 'react-icons/fi';
 import { SemesterReport } from '../types/report.types';
 import { Child } from '../types/child.types';
 
@@ -19,6 +19,7 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
     const [selectedYear, setSelectedYear] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedReport, setSelectedReport] = useState<SemesterReport | null>(null);
+    const [activeSection, setActiveSection] = useState<string>('religious_moral');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -84,10 +85,48 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
 
     const viewReportDetails = (report: SemesterReport) => {
         setSelectedReport(report);
+        setActiveSection('religious_moral');
     };
 
     const closeReportDetails = () => {
         setSelectedReport(null);
+    };
+
+    const sectionMeta = [
+        { id: 'religious_moral', title: 'Nilai Agama & Moral', icon: FiStar, bgColor: 'bg-stat-pink-bg', iconColor: 'text-pink-500' },
+        { id: 'social_emotional', title: 'Sosial Emosional', icon: FiHeart, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500' },
+        { id: 'cognitive', title: 'Kognitif', icon: FiCpu, bgColor: 'bg-stat-pink-bg', iconColor: 'text-pink-500' },
+        { id: 'language', title: 'Bahasa', icon: FiMessageCircle, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500' },
+        { id: 'gross_motor', title: 'Motorik Kasar', icon: FiActivity, bgColor: 'bg-stat-pink-bg', iconColor: 'text-pink-500' },
+        { id: 'fine_motor', title: 'Motorik Halus', icon: FiEdit2, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500' },
+        { id: 'independence', title: 'Kemandirian', icon: FiShield, bgColor: 'bg-stat-pink-bg', iconColor: 'text-pink-500' },
+        { id: 'art', title: 'Seni', icon: FiPenTool, bgColor: 'bg-stat-blue-bg/50', iconColor: 'text-blue-500' },
+        { id: 'teacher_notes', title: 'Catatan Guru', icon: FiFileText, bgColor: 'bg-yellow-100', iconColor: 'text-yellow-600' },
+    ] as const;
+
+    const formatChecklistItemName = (key: string) =>
+        key
+            .split('_')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+    const statusChip = (value?: string) => {
+        switch (value) {
+            case 'Konsisten':
+                return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Konsisten</span>;
+            case 'Belum Konsisten':
+                return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Belum Konsisten</span>;
+            case 'Tidak Teramati':
+                return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">Tidak Teramati</span>;
+            case 'Mandiri':
+                return <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">Mandiri</span>;
+            case 'Bantuan Verbal':
+                return <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-800">Bantuan Verbal</span>;
+            case 'Bantuan Fisik':
+                return <span className="inline-flex items-center rounded-full bg-pink-100 px-2.5 py-0.5 text-xs font-medium text-pink-800">Bantuan Fisik</span>;
+            default:
+                return <span className="text-xs text-gray-600">{value || '-'}</span>;
+        }
     };
 
     if (isLoading) {
@@ -194,40 +233,26 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-3">
                     {currentItems.map((report) => (
-                        <div key={report._id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
-                            <div className="p-6">
-                                {/* Header */}
-                                <div className="mb-4">
-                                    <h3 className="text-lg font-bold text-brand-purple">
-                                        {report.child_id.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">{parseSemester(report.semester)}</p>
-                                </div>
-
-                                {/* Info */}
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <span className="font-medium">Guru:</span>
-                                        <span className="ml-2">{report.teacher_id.name}</span>
-                                    </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <span className="font-medium">Jenis Kelamin:</span>
-                                        <span className="ml-2">{report.child_id.gender}</span>
-                                    </div>
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex space-x-2 pt-4 border-t">
-                                    <button
-                                        onClick={() => viewReportDetails(report)}
-                                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-brand-purple text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                                    >
-                                        <FiEye className="h-4 w-4" />
-                                        <span>Lihat Detail</span>
-                                    </button>
-                                </div>
+                        <div key={report._id} className="rounded-lg border border-gray-200 p-4 flex items-center justify-between bg-white">
+                            <div>
+                                <h3 className="font-semibold text-brand-purple">{report.child_id.name}</h3>
+                                <p className="text-sm text-gray-600">{parseSemester(report.semester)}</p>
+                                <p className="text-xs text-gray-500 mt-1">Guru: {report.teacher_id.name}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => viewReportDetails(report)}
+                                    className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
+                                >
+                                    Lihat
+                                </button>
+                                <button
+                                    className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm"
+                                >
+                                    Hapus
+                                </button>
                             </div>
                         </div>
                     ))}
@@ -289,83 +314,81 @@ export default function SemesterReportsTab({ reports, children, isLoading }: Sem
             {/* Detail Modal */}
             {selectedReport && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
                             <div>
-                                <h2 className="text-2xl font-bold text-brand-purple">
+                                <h2 className="text-2xl font-rammetto text-brand-purple">
                                     Laporan Semester - {selectedReport.child_id.name}
                                 </h2>
                                 <p className="text-gray-600">{parseSemester(selectedReport.semester)}</p>
+                                <p className="text-xs text-gray-500 mt-1">Guru: {selectedReport.teacher_id.name}</p>
                             </div>
-                            <button
-                                onClick={closeReportDetails}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
+                            <button onClick={closeReportDetails} className="text-gray-500 hover:text-gray-700">
                                 <FiX className="h-6 w-6" />
                             </button>
                         </div>
-                        
-                        <div className="p-6">
-                            <p className="text-gray-600 mb-4">
-                                Guru: <span className="font-medium">{selectedReport.teacher_id.name}</span>
-                            </p>
 
-                            <div className="space-y-4">
-                                {selectedReport.religious_moral && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Nilai Agama dan Moral</h3>
-                                        <p className="text-sm text-gray-600">Aspek penilaian mencakup kegiatan berdoa, sikap, dan pengenalan ajaran agama</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.social_emotional && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Sosial-Emosi</h3>
-                                        <p className="text-sm text-gray-600">Penilaian interaksi sosial, emosi, dan kepribadian anak</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.cognitive && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Kognitif</h3>
-                                        <p className="text-sm text-gray-600">Kemampuan berpikir, memecahkan masalah, dan pengetahuan umum</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.language && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Bahasa</h3>
-                                        <p className="text-sm text-gray-600">Kemampuan komunikasi verbal dan pemahaman bahasa</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.gross_motor && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Motorik Kasar</h3>
-                                        <p className="text-sm text-gray-600">Perkembangan gerakan tubuh besar seperti berlari, melompat, dll</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.fine_motor && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Motorik Halus</h3>
-                                        <p className="text-sm text-gray-600">Koordinasi gerakan tangan dan jari untuk aktivitas detail</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.independence && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Kemandirian</h3>
-                                        <p className="text-sm text-gray-600">Kemampuan melakukan aktivitas sehari-hari secara mandiri</p>
-                                    </div>
-                                )}
-                                
-                                {selectedReport.art && (
-                                    <div className="border rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Seni</h3>
-                                        <p className="text-sm text-gray-600">Ekspresi kreatif melalui musik, tari, dan seni visual</p>
-                                    </div>
-                                )}
+                        <div className="p-6 space-y-6">
+                            {/* Card Grid matching Teacher view */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {sectionMeta.map((section) => {
+                                    const Icon = section.icon;
+                                    const isActive = activeSection === section.id;
+                                    return (
+                                        <button
+                                            key={section.id}
+                                            type="button"
+                                            onClick={() => setActiveSection(section.id)}
+                                            className={`flex items-center space-x-4 rounded-lg p-4 text-left transition-all hover:shadow-lg ${isActive ? 'shadow-lg scale-105 border-2 border-login-pink' : 'shadow-sm'} ${section.bgColor}`}
+                                        >
+                                            <div className={`rounded-full p-3 ${section.iconColor} bg-white`}>
+                                                <Icon className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-brand-purple">{section.title}</div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Detail Section (read-only) */}
+                            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+                                {sectionMeta.map((section) => {
+                                    const isActive = activeSection === section.id;
+                                    if (!isActive) return null;
+
+                                    if (section.id === 'teacher_notes') {
+                                        const notes = (selectedReport as any).teacher_notes;
+                                        return (
+                                            <div key={section.id}>
+                                                <h3 className="text-xl font-bold text-brand-purple border-b border-gray-200 pb-3 mb-4">Catatan Akhir Guru</h3>
+                                                <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+                                                    <p className="text-sm text-gray-600 italic">{notes || 'Tidak ada catatan'}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    const data = (selectedReport as any)[section.id] as Record<string, string> | undefined;
+                                    return (
+                                        <div key={section.id}>
+                                            <h3 className="text-xl font-bold text-brand-purple border-b border-gray-200 pb-3 mb-4">{section.title}</h3>
+                                            {data ? (
+                                                <div className="divide-y divide-gray-100">
+                                                    {Object.entries(data).map(([key, value]) => (
+                                                        <div key={key} className="py-3 flex items-center justify-between">
+                                                            <span className="text-sm font-medium text-gray-800">{formatChecklistItemName(key)}</span>
+                                                            {statusChip(value)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm text-gray-500">Tidak ada data untuk kategori ini.</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>

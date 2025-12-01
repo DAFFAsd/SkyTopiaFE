@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiMail, FiPhone, FiArrowLeft, FiDownload, FiFilter, FiRefreshCw } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 
 interface Teacher {
   _id: string;
@@ -365,8 +366,8 @@ export default function TeacherManagementPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Manajemen Guru</h1>
+      <div className="space-y-6">
+        <PageHeader title="Manajemen Guru" description="Kelola data guru dan absensi" />
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
         </div>
@@ -381,18 +382,19 @@ export default function TeacherManagementPage() {
         <span>Kembali ke Dasbor</span>
       </Link>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-brand-purple">
-          Manajemen Guru
-        </h1>
-        <button
-          onClick={() => activeTab === 'teachers' ? fetchTeachers() : fetchAttendance()}
-          className="flex items-center space-x-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-        >
-          <FiRefreshCw className="h-4 w-4" />
-          <span>Refresh</span>
-        </button>
-      </div>
+      <PageHeader 
+        title="Manajemen Guru" 
+        description="Kelola data guru dan absensi"
+        actionButton={
+          <button
+            onClick={() => activeTab === 'teachers' ? fetchTeachers() : fetchAttendance()}
+            className="flex items-center space-x-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            <FiRefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
+          </button>
+        }
+      />
 
       {error && (
         <div className="rounded-md bg-red-50 p-4 text-red-700">

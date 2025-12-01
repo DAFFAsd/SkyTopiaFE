@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { FiArrowLeft, FiCheck, FiX, FiCamera } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 
@@ -200,7 +201,7 @@ export default function AttendancePage() {
                 <FiArrowLeft className="h-4 w-4" />
                 <span>Kembali ke Dasbor</span>
             </Link>
-            <h1 className="text-3xl font-bold text-brand-purple">Catat Absensi</h1>
+            <PageHeader title="Catat Absensi" description="Catat kehadiran harian Anda" />
 
             {/* Global Message Notification */}
             {message.text && (

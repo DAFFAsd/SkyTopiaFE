@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 
 interface Curriculum {
   _id: string;
@@ -267,7 +268,23 @@ export default function SchedulePage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Manajemen Jadwal</h1>
+        <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline mb-2">
+          <FiArrowLeft className="h-4 w-4" />
+          <span>Kembali ke Dasbor</span>
+        </Link>
+        <PageHeader 
+          title="Jadwal Kegiatan" 
+          description="Kelola jadwal harian dan mingguan"
+          actionButton={
+            <button
+              onClick={openAddModal}
+              className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
+            >
+              <FiPlus className="h-4 w-4" />
+              <span>Tambah Jadwal</span>
+            </button>
+          }
+        />
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
         </div>
@@ -281,16 +298,19 @@ export default function SchedulePage() {
         <FiArrowLeft className="h-4 w-4" />
         <span>Kembali ke Dasbor</span>
       </Link>
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-brand-purple">Manajemen Jadwal</h1>
-        <button
-          onClick={openAddModal}
-          className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
-        >
-          <FiPlus className="h-4 w-4" />
-          <span>Tambah Jadwal</span>
-        </button>
-      </div>
+      <PageHeader 
+        title="Jadwal Kegiatan" 
+        description="Kelola jadwal harian dan mingguan"
+        actionButton={
+          <button
+            onClick={openAddModal}
+            className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
+          >
+            <FiPlus className="h-4 w-4" />
+            <span>Tambah Jadwal</span>
+          </button>
+        }
+      />
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

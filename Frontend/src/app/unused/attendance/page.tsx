@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiLoader, FiDownload, FiFilter, FiArrowLeft } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 
 interface AttendanceRecord {
   _id: string;
@@ -175,7 +176,10 @@ export default function AttendancePage() {
         <FiArrowLeft className="h-4 w-4" />
         <span>Kembali ke Dasbor</span>
       </Link>
-      <h1 className="text-2xl font-bold text-brand-purple">Absensi Guru</h1>
+      <PageHeader 
+        title="Absensi" 
+        description="Monitor kehadiran anak dan guru"
+      />
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

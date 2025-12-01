@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import PageHeader from '../../../components/PageHeader';
 import { FiArrowLeft, FiPlus, FiLoader, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
@@ -285,9 +286,7 @@ export default function ResourceRequestsPage() {
             </Link>
 
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-brand-purple">
-                    Permintaan & Laporan
-                </h1>
+                <PageHeader title="Permintaan & Laporan" description="Ajukan permintaan barang atau laporkan fasilitas" />
                 <button
                     onClick={() => activeTab === 'inventory' ? fetchInventoryData() : fetchFacilityData()}
                     className="flex items-center space-x-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"

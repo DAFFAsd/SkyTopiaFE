@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiArrowLeft } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 
 interface User {
   id: string;
@@ -173,8 +174,8 @@ export default function DatabasePage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+      <div className="space-y-6">
+        <PageHeader title="Guru" description="Kelola data guru dan pengajar" />
         <div className="flex justify-center items-center py-8">
           <FiLoader className="animate-spin h-8 w-8 text-brand-purple" />
         </div>
@@ -184,12 +185,15 @@ export default function DatabasePage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
+      <div className="space-y-6">
+        <Link href="/adminDashboard" className="flex items-center space-x-2 text-sm text-brand-purple hover:underline">
+          <FiArrowLeft className="h-4 w-4" />
+          <span>Kembali ke Dasbor</span>
+        </Link>
+        <PageHeader title="Guru" description="Kelola data guru dan pengajar" />
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
-        <Link href="/adminDashboard" className="text-sm text-brand-purple">← Back to Admin Dashboard</Link>
       </div>
     );
   }
@@ -200,16 +204,19 @@ export default function DatabasePage() {
         <FiArrowLeft className="h-4 w-4" />
         <span>Kembali ke Dasbor</span>
       </Link>
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-brand-purple">Database Guru</h1>
-        <button
-          onClick={openAddModal}
-          className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
-        >
-          <FiPlus className="h-4 w-4" />
-          <span>Tambah Guru</span>
-        </button>
-      </div>
+      <PageHeader 
+        title="Guru" 
+        description="Kelola data guru dan pengajar"
+        actionButton={
+          <button
+            onClick={openAddModal}
+            className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
+          >
+            <FiPlus className="h-4 w-4" />
+            <span>Tambah Guru</span>
+          </button>
+        }
+      />
 
       {users.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
