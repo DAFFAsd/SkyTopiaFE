@@ -51,7 +51,8 @@ class AgentService {
             this.createUsersLookupTool(),
             this.createSemesterReportsLookupTool(),
             this.createScheduleLookupTool(),
-            this.createCurriculumLookupTool() 
+            this.createCurriculumLookupTool(),
+            this.createScheduleCreationTool()
         ];
 
         // Allow tools to receive configurable context (data user dan context)
@@ -915,6 +916,143 @@ class AgentService {
         );
     }
 
+    // Create the schedule creation tool for admin to create new schedules via chatbot
+    createScheduleCreationTool() {
+        return tool(
+            async (input, config) => {
+                try {
+                    // Get from user input
+                    const { title, curriculum_title, date, startTime, endTime, teacher_name, location } = input;
+
+                    // Get the user context
+                    const user = config?.configurable?.user;
+
+                    // Check if user is admin
+                    if (!user || user.role !== 'Admin') {
+                        return JSON.stringify({ 
+                            success: false, 
+                            error: "Only administrators can create schedules" 
+                        });
+                    }
+
+                    // Validate required fields
+                    if (!title || !date || !startTime || !endTime) {
+                        return JSON.stringify({ 
+                            success: false, 
+                            error: "Missing required fields: title, date, startTime, endTime are required" 
+                        });
+                    }
+
+                    // Access the database
+                    const database = this.client.db();
+                    
+                    // Find curriculum by title if provided
+                    let curriculumId = null;
+                    if (curriculum_title) {
+                        const curriculum = await database.collection("curriculums").findOne({
+                            title: { $regex: curriculum_title, $options: 'i' }
+                        });
+                        if (curriculum) {
+                            curriculumId = curriculum._id;
+                        }
+                    }
+
+                    // Find teacher by name if provided
+                    let teacherId = null;
+                    if (teacher_name) {
+                        const teacher = await database.collection("users").findOne({
+                            name: { $regex: teacher_name, $options: 'i' },
+                            role: "Teacher"
+                        });
+                        if (teacher) {
+                            teacherId = teacher._id;
+                        }
+                    }
+
+                    // Parse date and get day name
+                    const scheduleDate = new Date(date);
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const dayName = dayNames[scheduleDate.getDay()];
+
+                    // Create schedule document
+                    const scheduleData = {
+                        title: title,
+                        curriculum: curriculumId,
+                        date: scheduleDate,
+                        day: dayName,
+                        startTime: startTime,
+                        endTime: endTime,
+                        teacher: teacherId,
+                        location: location || null,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+
+                    // Insert into database
+                    const result = await database.collection("schedules").insertOne(scheduleData);
+
+                    // Get the created schedule with populated data
+                    const createdSchedule = await database.collection("schedules").aggregate([
+                        { $match: { _id: result.insertedId } },
+                        {
+                            $lookup: {
+                                from: "curriculums",
+                                localField: "curriculum",
+                                foreignField: "_id",
+                                as: "curriculum_info"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "teacher",
+                                foreignField: "_id",
+                                as: "teacher_info"
+                            }
+                        }
+                    ]).toArray();
+
+                    return JSON.stringify({ 
+                        success: true, 
+                        message: "Schedule created successfully",
+                        schedule: {
+                            _id: result.insertedId,
+                            title: title,
+                            date: scheduleDate.toISOString(),
+                            day: dayName,
+                            startTime: startTime,
+                            endTime: endTime,
+                            curriculum_title: createdSchedule[0]?.curriculum_info?.[0]?.title || "No curriculum",
+                            teacher_name: createdSchedule[0]?.teacher_info?.[0]?.name || "No teacher assigned",
+                            location: location || "No location specified"
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error in schedule creation:", error);
+                    return JSON.stringify({ 
+                        success: false, 
+                        error: "Failed to create schedule", 
+                        details: error.message 
+                    });
+                }
+            },
+            {
+                // Tool configuration
+                name: "schedule_creation",
+                description: "Create a new schedule entry - ADMIN ONLY. Date format: YYYY-MM-DD, Time format: HH:MM (24-hour). Example: date='2025-12-05', startTime='09:00', endTime='10:00'",
+                schema: z.object({
+                    title: z.string().describe("Schedule title or activity name (required)"),
+                    curriculum_title: z.string().optional().describe("Curriculum title to link (optional, will search by name)"),
+                    date: z.string().describe("Schedule date in YYYY-MM-DD format (required)"),
+                    startTime: z.string().describe("Start time in HH:MM format, 24-hour (required)"),
+                    endTime: z.string().describe("End time in HH:MM format, 24-hour (required)"),
+                    teacher_name: z.string().optional().describe("Teacher name to assign (optional, will search by name)"),
+                    location: z.string().optional().describe("Location or room (optional)")
+                }),
+            }
+        );
+    }
+
     // METHODS FOR WORKFLOW MANAGEMENT
 
     // LangGraph workflow setup
@@ -958,9 +1096,13 @@ class AgentService {
         const prompt = ChatPromptTemplate.fromMessages([
             [
                 "system",
-                `You are Daycare SkyTopia Assistant helping parents.
+                `You are Daycare SkyTopia Assistant helping parents and administrators.
 
                 IMPORTANT: RESPOND IN BAHASA INDONESIA ONLY. Provide brief and to the point analysis and comprehensive summaries.
+                
+                USER ROLE DETECTION:
+                - For PARENT users: Provide information about their children, reports, payments, and schedules
+                - For ADMIN users: Provide schedule management capabilities including creating new schedules
 
                 DATABASE ENUM VALUES - USE THESE EXACT TERMS:
                 - Payment Status: "Tertunda", "Terkirim", "Dibayar", "Ditolak", "Jatuh Tempo" 
@@ -1045,7 +1187,7 @@ class AgentService {
                 - DON'T: "Kurikulum: Tema Binatang, Sub-tema Binatang Laut, Aktivitas Menggambar Ikan, Bernyanyi lagu ikan..."
                 - DO: "Tema bulan ini: 'Eksplorasi Laut'. Anak belajar tentang berbagai biota laut melalui gambar, cerita, dan lagu. Di rumah bisa dilanjutkan dengan mengamati aquarium atau buku bergambar laut."
 
-                TOOLS:
+                TOOLS (Parent Users):
                 1. children_lookup - Get children data (ALWAYS USE FIRST)
                 2. daily_reports_lookup - Search daily activities (returns ALL reports if no date specified)
                 3. payments_lookup - Search payment records  
@@ -1053,14 +1195,39 @@ class AgentService {
                 5. users_lookup - Search teacher contacts
                 6. schedule_lookup - Search class schedules by day
                 7. curriculum_lookup - Search curriculum and learning themes
+                
+                TOOLS (Admin Users):
+                8. schedule_creation - Create new schedule entries (ADMIN ONLY)
+                   - Required: title, date (YYYY-MM-DD), startTime (HH:MM), endTime (HH:MM)
+                   - Optional: curriculum_title (will search by name), teacher_name (will search by name), location
+                
+                ADMIN SCHEDULE CREATION WORKFLOW:
+                1. Parse user intent to extract schedule details
+                2. Convert date references (e.g., "Senin depan", "5 Desember") to YYYY-MM-DD format
+                3. Convert time references (e.g., "jam 9 pagi", "pukul 14:00") to HH:MM format
+                4. Call schedule_creation tool with extracted parameters
+                5. Confirm successful creation with schedule details
+                
+                ADMIN QUERY EXAMPLES:
+                - "Buatkan jadwal Matematika hari Senin tanggal 4 Desember 2025 jam 09:00-10:00 dengan guru Ibu Siti"
+                  → schedule_creation(title="Matematika", date="2025-12-04", startTime="09:00", endTime="10:00", teacher_name="Ibu Siti")
+                - "Buat jadwal Bahasa Inggris untuk tanggal 5 Desember 2025 pukul 13:00 sampai 14:30"
+                  → schedule_creation(title="Bahasa Inggris", date="2025-12-05", startTime="13:00", endTime="14:30")
+                - "Jadwalkan Olahraga di Lapangan pada hari Rabu jam 10 pagi hingga jam 11"
+                  → schedule_creation(title="Olahraga", date="[calculate next Wednesday]", startTime="10:00", endTime="11:00", location="Lapangan")
 
-                QUERY INTERPRETATION GUIDE:
+                QUERY INTERPRETATION GUIDE (PARENT):
                 - "Jadwal hari Senin" → schedule_lookup(day: "Senin")
                 - "Aktivitas minggu ini" → schedule_lookup() + daily_reports_lookup(time_period: "this week")
                 - "Tema pembelajaran" → curriculum_lookup()
                 - "Apa yang dipelajari anak" → curriculum_lookup() + daily_reports_lookup()
                 - "Kurikulum untuk toddler" → curriculum_lookup(grade: "Toddler")
                 - "Kegiatan hari ini" → schedule_lookup() + daily_reports_lookup(date: "today")
+                
+                QUERY INTERPRETATION GUIDE (ADMIN):
+                - "Buatkan jadwal X tanggal Y jam Z" → schedule_creation(...)
+                - "Tambah jadwal X hari Senin" → schedule_creation(...)
+                - "Jadwalkan X dengan guru Y" → schedule_creation(...)
 
                 Current time: {time}`,
             ],
@@ -1091,9 +1258,9 @@ class AgentService {
             // Ensure the system is initialized before proceeding
             await this.ensureInitialized();
 
-            // Check if the user is parent
-            if (user.role !== 'Parent') {
-                throw new Error("Chatbot is only available for parents");
+            // Check if the user is parent or admin
+            if (user.role !== 'Parent' && user.role !== 'Admin') {
+                throw new Error("Chatbot is only available for parents and administrators");
             }
 
             // Execute the LangGraph workflow with user context

@@ -18,6 +18,7 @@ import {
     FiDollarSign,
     FiArrowLeftCircle,
     FiLogOut,
+    FiMessageSquare,
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 
@@ -30,7 +31,7 @@ const navItems: NavItem[] = [
     { name: 'Data Anak', href: '/adminDashboard/children', icon: FiSmile },
     { name: 'Semua Laporan', href: '/adminDashboard/reports', icon: FiFileText },
     { name: 'Jadwal', href: '/adminDashboard/schedule', icon: FiCalendar },
-    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },    
+    { name: 'Kurikulum', href: '/adminDashboard/curriculum', icon: FiCalendar },
     { name: 'Laporan Inventaris', href: '/adminDashboard/inventory-reports', icon: FiBarChart },
     { name: 'Tagihan', href: '/adminDashboard/billing', icon: FiDollarSign },
 ];

@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const chatbotController = require('../controllers/chatbot.controller');
 const { authMiddleware } = require('../middleware/auth');
-const { requireParent } = require('../middleware/roleCheck');
+const { requireParent, requireAdmin } = require('../middleware/roleCheck');
 
-router.post('/new', authMiddleware, requireParent, chatbotController.startChatbot);
-router.post('/:threadId/message', authMiddleware, requireParent, chatbotController.continueChatbot);
-router.get('/history/:threadId', authMiddleware, requireParent, chatbotController.getChatHistory);
-router.get('/sessions', authMiddleware, requireParent, chatbotController.getUserChatSessions);
-router.delete('/:threadId', authMiddleware, requireParent, chatbotController.deleteChatSession);
+// Routes for both Parent and Admin
+router.post('/new', authMiddleware, chatbotController.startChatbot);
+router.post('/:threadId/message', authMiddleware, chatbotController.continueChatbot);
+router.get('/history/:threadId', authMiddleware, chatbotController.getChatHistory);
+router.get('/sessions', authMiddleware, chatbotController.getUserChatSessions);
+router.delete('/:threadId', authMiddleware, chatbotController.deleteChatSession);
 
 module.exports = router;

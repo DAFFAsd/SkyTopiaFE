@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiChevronLeft, FiChevronRight, FiArrowLeft } from 'react-icons/fi';
+import { useState, useEffect, useRef } from 'react';
+import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiChevronLeft, FiChevronRight, FiArrowLeft, FiMessageSquare, FiSend } from 'react-icons/fi';
 import PageHeader from '../../../components/PageHeader';
+import ReactMarkdown from 'react-markdown';
 
 interface Curriculum {
   _id: string;
@@ -38,6 +39,11 @@ interface Teacher {
   email: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function SchedulePage() {
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -49,12 +55,95 @@ export default function SchedulePage() {
   const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Chatbot states
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
+  const [chatThreadId, setChatThreadId] = useState<string | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCurriculums();
     fetchSchedules();
     fetchTeachers();
   }, []);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isSendingChat) return;
+
+    const userMessage = chatInput;
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsSendingChat(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Token tidak ditemukan');
+
+      const url = chatThreadId 
+        ? `http://localhost:3000/api/chatbot/${chatThreadId}/message`
+        : 'http://localhost:3000/api/chatbot/new';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (!chatThreadId && data.thread_id) {
+          setChatThreadId(data.thread_id);
+        }
+
+        // Fetch chat history to get the AI response
+        const historyUrl = `http://localhost:3000/api/chatbot/history/${chatThreadId || data.thread_id}`;
+        const historyResponse = await fetch(historyUrl, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const historyData = await historyResponse.json();
+
+        if (historyData.success) {
+          setChatMessages(historyData.data.messages);
+          // Refresh schedules after chatbot creates one
+          await fetchSchedules();
+        }
+      } else {
+        throw new Error(data.message || 'Gagal mengirim pesan');
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.' 
+      }]);
+    } finally {
+      setIsSendingChat(false);
+    }
+  };
+
+  const toggleChatbot = () => {
+    setShowChatbot(!showChatbot);
+    if (!showChatbot && chatMessages.length === 0) {
+      setChatMessages([{
+        role: 'assistant',
+        content: 'Halo Admin! Saya SkyBot, asisten penjadwalan Anda. Saya bisa membantu membuat jadwal dengan mudah.\n\n**Contoh perintah:**\n- "Buatkan jadwal Matematika hari Senin tanggal 2 Desember 2025 jam 09:00-10:00"\n- "Jadwalkan Bahasa Inggris untuk tanggal 5 Desember pukul 13:00-14:30"\n- "Buat jadwal Olahraga di Lapangan hari Rabu jam 10:00-11:00"'
+      }]);
+    }
+  };
 
   const fetchCurriculums = async () => {
     try {
@@ -302,13 +391,22 @@ export default function SchedulePage() {
         title="Jadwal Kegiatan" 
         description="Kelola jadwal harian dan mingguan"
         actionButton={
-          <button
-            onClick={openAddModal}
-            className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
-          >
-            <FiPlus className="h-4 w-4" />
-            <span>Tambah Jadwal</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={toggleChatbot}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2 transition-colors"
+            >
+              <FiMessageSquare className="h-4 w-4" />
+              <span>AI Asisten</span>
+            </button>
+            <button
+              onClick={openAddModal}
+              className="bg-brand-purple text-white px-4 py-2 rounded-lg hover:bg-opacity-90 flex items-center space-x-2"
+            >
+              <FiPlus className="h-4 w-4" />
+              <span>Tambah Manual</span>
+            </button>
+          </div>
         }
       />
 
@@ -571,6 +669,87 @@ export default function SchedulePage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Chatbot Panel */}
+      {showChatbot && (
+        <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50 animate-slide-up">
+          {/* Chatbot Header */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-2xl flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <FiMessageSquare className="h-5 w-5" />
+              <h3 className="font-semibold">SkyBot - Asisten Jadwal</h3>
+            </div>
+            <button
+              onClick={toggleChatbot}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <FiX className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Chat Messages */}
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"
+          >
+            {chatMessages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2 ${
+                    msg.role === 'user'
+                      ? 'bg-blue-500 text-white rounded-br-none'
+                      : 'bg-white text-gray-800 rounded-bl-none border border-gray-200'
+                  }`}
+                >
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isSendingChat && (
+              <div className="flex justify-start">
+                <div className="bg-white rounded-2xl rounded-bl-none px-4 py-3 border border-gray-200 flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Chat Input */}
+          <form onSubmit={handleChatSubmit} className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+            <div className="flex items-center space-x-2 bg-gray-50 p-2 rounded-xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ketik perintah untuk membuat jadwal..."
+                disabled={isSendingChat}
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={isSendingChat || !chatInput.trim()}
+                className="flex-shrink-0 p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSendingChat ? (
+                  <FiLoader className="h-5 w-5 animate-spin" />
+                ) : (
+                  <FiSend className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              Contoh: &quot;Buatkan jadwal Matematika hari Senin jam 09:00-10:00&quot;
+            </p>
+          </form>
         </div>
       )}
     </div>
