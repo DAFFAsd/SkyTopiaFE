@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiChevronLeft, FiChevronRight, FiArrowLeft, FiMessageSquare, FiSend } from 'react-icons/fi';
 import PageHeader from '../../../components/PageHeader';
 import ReactMarkdown from 'react-markdown';
+import { apiUrl } from '@/lib/api';
 
 interface Curriculum {
   _id: string;
@@ -150,7 +151,7 @@ export default function SchedulePage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/curriculums', {
+      const response = await fetch(apiUrl('/curriculums'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -170,7 +171,7 @@ export default function SchedulePage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/schedules', {
+      const response = await fetch(apiUrl('/schedules'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -195,7 +196,7 @@ export default function SchedulePage() {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/users?role=Teacher', {
+      const response = await fetch(apiUrl('/users?role=Teacher'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -336,7 +337,7 @@ export default function SchedulePage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/schedules/${id}`, {
+      const response = await fetch(apiUrl(`/schedules/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
