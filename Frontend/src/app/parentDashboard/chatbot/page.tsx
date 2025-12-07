@@ -133,6 +133,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             });
         }
 
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Gagal terhubung ke server`);
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -148,7 +152,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             }
             
         } else {
-            throw new Error(data.message || 'Gagal mengirim pesan dari server');
+            throw new Error(data.error || data.message || 'Gagal mengirim pesan dari server');
         }
         
     } catch (err: unknown) {

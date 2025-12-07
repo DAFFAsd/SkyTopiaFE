@@ -134,6 +134,10 @@ export default function AdminChatbotPage() {
                 });
             }
 
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: Gagal terhubung ke server`);
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -149,7 +153,7 @@ export default function AdminChatbotPage() {
                 }
                 
             } else {
-                throw new Error(data.message || 'Gagal mengirim pesan dari server');
+                throw new Error(data.error || data.message || 'Gagal mengirim pesan dari server');
             }
             
         } catch (err: unknown) {
