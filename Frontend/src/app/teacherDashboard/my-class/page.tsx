@@ -57,10 +57,50 @@ interface Schedule {
 
             // 2. Filter di frontend (ini yang kita omongin)
             const allChildren: Child[] = data.children;
-            const filteredChildren = allChildren.filter(child => 
-            // Cek di dalem 'schedules', apa ada yg 'teacher._id'-nya sama kayak ID guru yg login
-            child.schedules.some(schedule => schedule.teacher._id === teacherId)
-            );
+            
+            // Debug logging
+            console.log('=== DEBUG MY CLASS ===');
+            console.log('Teacher ID:', teacherId);
+            console.log('Total children from API:', allChildren.length);
+            
+            const filteredChildren = allChildren.filter(child => {
+                // Cek apakah child punya schedules
+                if (!child.schedules || !Array.isArray(child.schedules) || child.schedules.length === 0) {
+                    console.log(`${child.name}: Tidak ada schedules atau schedules bukan array`);
+                    return false;
+                }
+                
+                // Cek setiap schedule
+                const hasMatchingSchedule = child.schedules.some(schedule => {
+                    // Safety check: pastikan schedule dan teacher exist
+                    if (!schedule || !schedule.teacher || !schedule.teacher._id) {
+                        console.log(`${child.name}: Schedule atau teacher data tidak lengkap`, schedule);
+                        return false;
+                    }
+                    
+                    const scheduleTeacherId = schedule.teacher._id.toString().trim();
+                    const currentTeacherId = teacherId.toString().trim();
+                    const match = scheduleTeacherId === currentTeacherId;
+                    
+                    console.log(`${child.name}: Comparing`, {
+                        scheduleTeacherId,
+                        currentTeacherId,
+                        match
+                    });
+                    
+                    return match;
+                });
+                
+                if (hasMatchingSchedule) {
+                    console.log(`✅ ${child.name}: MATCH!`);
+                }
+                
+                return hasMatchingSchedule;
+            });
+            
+            console.log('Filtered children count:', filteredChildren.length);
+            console.log('Filtered children:', filteredChildren.map(c => c.name));
+            console.log('======================');
 
             setMyChildren(filteredChildren);
 
