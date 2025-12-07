@@ -1,7 +1,6 @@
 // API Service for Reports Management
+import { API_BASE_URL } from '@/lib/api';
 import { DailyReport, SemesterReport, DailyReportApiResponse, SemesterReportApiResponse } from '../types/report.types';
-
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

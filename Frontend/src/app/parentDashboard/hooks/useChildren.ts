@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Child } from '../types';
+import { apiUrl } from '@/lib/api';
 
 export function useChildren() {
     const [children, setChildren] = useState<Child[]>([]);
@@ -19,7 +20,7 @@ export function useChildren() {
                 throw new Error('Token tidak ditemukan. Silakan login kembali.');
             }
 
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

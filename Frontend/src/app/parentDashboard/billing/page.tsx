@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiArrowLeft, FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiXCircle, FiUpload, FiFilter } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -48,7 +49,7 @@ export default function BillingPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/payments/my-payments', {
+            const response = await fetch(apiUrl('/payments/my-payments'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -80,7 +81,7 @@ export default function BillingPage() {
             const formData = new FormData();
             formData.append('proof_file', file); 
 
-            const response = await fetch(`http://localhost:3000/api/payments/${paymentId}/submit-proof`, {
+            const response = await fetch(apiUrl(`/payments/${paymentId}/submit-proof`), {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

@@ -7,6 +7,7 @@ import {
     FiArrowLeft, FiBookOpen, FiCheck, FiX, FiMinus, FiStar, FiHeart,
     FiCpu, FiMessageCircle, FiActivity, FiEdit2, FiShield, FiPenTool
 } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -65,7 +66,7 @@ export default function SemesterReportsPage() {
             setError('Token tidak ditemukan. Silakan login kembali.');
             return;
         }
-        const response = await fetch('http://localhost:3000/api/semester-reports/my-child-reports', {
+        const response = await fetch(apiUrl('/semester-reports/my-child-reports'), {
             headers: {
             'Authorization': `Bearer ${token}`,
             },

@@ -6,6 +6,7 @@ import PageHeader from '../../components/PageHeader';
 import { FiArrowLeft, FiUser, FiCalendar, FiHeart, FiDollarSign, FiClock, FiMapPin, FiBook } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
 import { formatTime } from '../../utils/formatters';
+import { apiUrl } from '@/lib/api';
 
 interface Teacher {
     _id: string;
@@ -73,7 +74,7 @@ export default function ChildDetailPage() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:3000/api/children/${id}`, {
+            const response = await fetch(apiUrl(`/children/${id}`), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

@@ -7,6 +7,7 @@ import {
     FiArrowLeft, FiSend, FiList, FiTrash2, FiLoader, FiBookOpen, 
     FiSunrise, FiMoon, FiFileText, FiHeart, FiActivity, FiUser, FiCoffee, FiCalendar
 } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -83,7 +84,7 @@ export default function DailyReportPage() {
     const fetchChildren = useCallback(async (token: string) => {
         setIsLoadingChildren(true);
         try {
-            const response = await fetch('http://localhost:3000/api/children', {
+            const response = await fetch(apiUrl('/children'), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             const data = await response.json();
@@ -107,7 +108,7 @@ export default function DailyReportPage() {
     const fetchMyReports = useCallback(async (token: string) => {
         setIsLoadingReports(true);
         try {
-            const response = await fetch('http://localhost:3000/api/daily-reports/my-reports', {
+            const response = await fetch(apiUrl('/daily-reports/my-reports'), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             const data = await response.json();
@@ -164,7 +165,7 @@ export default function DailyReportPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            const response = await fetch('http://localhost:3000/api/daily-reports', {
+            const response = await fetch(apiUrl('/daily-reports'), {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -202,7 +203,7 @@ export default function DailyReportPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            const response = await fetch(`http://localhost:3000/api/daily-reports/${reportId}`, {
+            const response = await fetch(apiUrl(`/daily-reports/${reportId}`), {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

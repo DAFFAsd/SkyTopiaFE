@@ -10,6 +10,7 @@ import {
     FiUser, FiCalendar, FiTrash2, FiLoader
     } from 'react-icons/fi';
     import { IconType } from 'react-icons';
+import { apiUrl } from '@/lib/api';
 
     interface Child {
     _id: string;
@@ -227,7 +228,7 @@ import {
     const fetchChildren = useCallback(async (token: string) => {
         setIsLoadingChildren(true);
         try {
-        const response = await fetch('http://localhost:3000/api/children', { 
+        const response = await fetch(apiUrl('/children'), { 
             headers: { 'Authorization': `Bearer ${token}` },
         });
         const data = await response.json();
@@ -251,7 +252,7 @@ import {
     const fetchMyReports = useCallback(async (token: string) => {
         setIsLoadingReports(true);
         try {
-        const response = await fetch('http://localhost:3000/api/semester-reports/my-reports', {
+        const response = await fetch(apiUrl('/semester-reports/my-reports'), {
             headers: { 'Authorization': `Bearer ${token}` },
         });
         const data = await response.json();
@@ -321,7 +322,7 @@ import {
             ...formData
         };
         
-        const response = await fetch('http://localhost:3000/api/semester-reports', {
+        const response = await fetch(apiUrl('/semester-reports'), {
             method: 'POST',
             headers: {
             'Authorization': `Bearer ${token}`,
@@ -358,7 +359,7 @@ import {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            const response = await fetch(`http://localhost:3000/api/semester-reports/${reportId}`, {
+            const response = await fetch(apiUrl(`/semester-reports/${reportId}`), {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

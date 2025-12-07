@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiArrowLeft, FiUser, FiCalendar, FiHeart } from 'react-icons/fi';
 import PageHeader from '../components/PageHeader';
+import { apiUrl } from '@/lib/api';
 
 interface Schedule {
     _id: string;
@@ -49,7 +50,7 @@ export default function MyChildrenPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

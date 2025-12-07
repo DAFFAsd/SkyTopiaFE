@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'; 
 import { FiLoader } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 import {
     LineChart,
     Line,
@@ -73,7 +74,7 @@ export default function PaymentChart() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error("Token tidak ditemukan.");
 
-            const response = await fetch('http://localhost:3000/api/payments/my-payments', {
+            const response = await fetch(apiUrl('/payments/my-payments'), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             

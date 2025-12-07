@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FiLoader, FiChevronDown, FiArrowLeft } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface FacilityCondition {
   _id: string;
@@ -39,7 +40,7 @@ export default function FacilityReportPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/facility/conditions/all', {
+      const response = await fetch(apiUrl('/facility/conditions/all'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -68,7 +69,7 @@ export default function FacilityReportPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/facility/conditions/${id}/status`, {
+      const response = await fetch(apiUrl(`/facility/conditions/${id}/status`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

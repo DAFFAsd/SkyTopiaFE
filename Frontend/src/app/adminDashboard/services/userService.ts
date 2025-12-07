@@ -1,7 +1,6 @@
 // API Service for User Management
+import { API_BASE_URL } from '@/lib/api';
 import { User, UserFormData, UserApiResponse } from '../types/user.types';
-
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

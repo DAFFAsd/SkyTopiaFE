@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PageHeader from '../../../components/PageHeader';
 import { FiArrowLeft, FiUser, FiLoader } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 // Tipe data buat 'getAllChildren'
 interface Schedule {
@@ -45,7 +46,7 @@ interface Schedule {
             const teacherId = currentUser.id;
 
             // 1. Fetch SEMUA anak
-            const response = await fetch('http://localhost:3000/api/children', {
+            const response = await fetch(apiUrl('/children'), {
             headers: { 'Authorization': `Bearer ${token}` },
             });
             const data = await response.json();

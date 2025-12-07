@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { Child, Schedule } from '../types';
 import { formatTime } from '../utils/formatters';
+import { apiUrl } from '@/lib/api';
 
 export default function SchedulesPage() {
     const [children, setChildren] = useState<Child[]>([]);
@@ -28,7 +29,7 @@ export default function SchedulesPage() {
                 throw new Error('Token tidak ditemukan. Silakan login kembali.');
             }
 
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

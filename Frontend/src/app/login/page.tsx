@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiX, FiFileText } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +45,7 @@ export default function LoginPage() {
             localStorage.removeItem('savedPassword');
         }
 
-        const API_URL = 'http://localhost:3000/api/users/login';
+        const API_URL = apiUrl('/users/login');
 
         try {
         const res = await fetch(API_URL, {

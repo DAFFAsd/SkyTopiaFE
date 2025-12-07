@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { 
     FiArrowLeft, FiUser, FiLoader, FiCalendar, FiClock 
 } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 // --- Tipe Data Lengkap (sesuai 'getChildById') ---
 interface Parent {
@@ -62,7 +63,7 @@ export default function ChildInfoPage() {
                     if (!token) throw new Error('Token tidak ditemukan');
 
                     // Pake 'Shared Route' (udah bener)
-                    const response = await fetch(`http://localhost:3000/api/children/${id}`, {
+                    const response = await fetch(apiUrl(`/children/${id}`), {
                         headers: { 'Authorization': `Bearer ${token}` },
                     });
                     const data = await response.json();

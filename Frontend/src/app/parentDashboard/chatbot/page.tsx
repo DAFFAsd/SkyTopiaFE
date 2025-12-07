@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { FiArrowLeft, FiSend, FiPlus, FiTrash2, FiLoader, FiMessageSquare, FiChevronLeft } from 'react-icons/fi';
 import Image from 'next/image'; 
+import { apiUrl } from '@/lib/api';
 
 interface Session {
     _id: string;
@@ -44,7 +45,7 @@ export default function ChatbotPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
             
-            const response = await fetch('http://localhost:3000/api/chatbot/sessions', {
+            const response = await fetch(apiUrl('/chatbot/sessions'), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             const data = await response.json();
@@ -71,7 +72,7 @@ export default function ChatbotPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            const response = await fetch(`http://localhost:3000/api/chatbot/history/${threadId}`, {
+            const response = await fetch(apiUrl(`/chatbot/history/${threadId}`), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             
@@ -123,11 +124,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         const body = JSON.stringify({ message: userMessageContent });
         
         if (activeThreadId) {
-            response = await fetch(`http://localhost:3000/api/chatbot/${activeThreadId}/message`, {
+            response = await fetch(apiUrl(`/chatbot/${activeThreadId}/message`), {
                 method: 'POST', headers, body
             });
         } else {
-            response = await fetch('http://localhost:3000/api/chatbot/new', {
+            response = await fetch(apiUrl('/chatbot/new'), {
                 method: 'POST', headers, body
             });
         }
@@ -168,7 +169,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
             
-            await fetch(`http://localhost:3000/api/chatbot/${threadId}`, {
+            await fetch(apiUrl(`/chatbot/${threadId}`), {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
             });

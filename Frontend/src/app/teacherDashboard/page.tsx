@@ -7,6 +7,7 @@ import {
     FiClipboard, FiBookOpen, FiCheckSquare, FiArchive, FiAlertTriangle, FiCalendar,
     FiUsers, FiFileText
 } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -155,7 +156,7 @@ export default function TeacherDashboardPage() {
 
             // Try to fetch from backend endpoint first
             try {
-                const response = await fetch('http://localhost:3000/api/users/dashboard/stats', { 
+                const response = await fetch(apiUrl('/users/dashboard/stats'), { 
                     headers 
                 });
                 
@@ -188,11 +189,11 @@ export default function TeacherDashboardPage() {
 
             // Fallback: Fetch from individual endpoints
             const [childrenRes, attendanceRes] = await Promise.all([
-                fetch('http://localhost:3000/api/children', { headers }),
-                fetch('http://localhost:3000/api/attendances/my-records', { headers })
+                fetch(apiUrl('/children'), { headers }),
+                fetch(apiUrl('/attendances/my-records'), { headers })
             ]);
 
-            const reportsRes = await fetch('http://localhost:3000/api/daily-reports/my-reports', { headers });
+            const reportsRes = await fetch(apiUrl('/daily-reports/my-reports'), { headers });
 
             // --- KODE DEBUGGING MULAI ---
             // Cek status Children

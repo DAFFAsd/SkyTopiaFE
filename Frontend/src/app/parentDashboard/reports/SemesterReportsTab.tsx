@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { SemesterReport, Child } from '../types';
 import { formatDateTime } from '../utils/formatters';
+import { apiUrl } from '@/lib/api';
 
 export default function SemesterReportsTab() {
     const [reports, setReports] = useState<SemesterReport[]>([]);
@@ -24,7 +25,7 @@ export default function SemesterReportsTab() {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
 
@@ -47,7 +48,7 @@ export default function SemesterReportsTab() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/semester-reports/my-child-reports', {
+            const response = await fetch(apiUrl('/semester-reports/my-child-reports'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

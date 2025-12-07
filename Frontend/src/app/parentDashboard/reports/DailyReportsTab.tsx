@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { DailyReport, Child } from '../types';
 import { formatDateWithDay, formatDateTime, getHealthStatusColor, getMoodColor, translateHealthStatus, translateMood } from '../utils/formatters';
+import { apiUrl } from '@/lib/api';
 
 export default function DailyReportsTab() {
     const [reports, setReports] = useState<DailyReport[]>([]);
@@ -32,7 +33,7 @@ export default function DailyReportsTab() {
                 return;
             }
 
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -63,7 +64,7 @@ export default function DailyReportsTab() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:3000/api/daily-reports/child/${childId}`, {
+            const response = await fetch(apiUrl(`/daily-reports/child/${childId}`), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

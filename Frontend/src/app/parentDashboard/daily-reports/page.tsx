@@ -6,6 +6,7 @@ import {
     FiSunrise, FiMoon, FiFileText, FiHeart, FiUser, FiCoffee 
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -50,7 +51,7 @@ export default function DailyReportsPage() {
                 setError('Token tidak ditemukan. Silakan login kembali.');
                 return;
             }
-            const response = await fetch('http://localhost:3000/api/children/my-children', {
+            const response = await fetch(apiUrl('/children/my-children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -79,7 +80,7 @@ export default function DailyReportsPage() {
                 setError('Token tidak ditemukan. Silakan login kembali.');
                 return;
             }
-            const response = await fetch(`http://localhost:3000/api/daily-reports/my-child-reports`, {
+            const response = await fetch(apiUrl('/daily-reports/my-child-reports'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

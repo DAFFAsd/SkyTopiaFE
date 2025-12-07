@@ -10,6 +10,7 @@ import {
 import { IconType } from 'react-icons';
 import PaymentChart from './components/PaymentChart';
 import PageHeader from './components/PageHeader';
+import { apiUrl } from '@/lib/api';
 
 type Child = {
     _id: string;
@@ -87,7 +88,7 @@ export default function ParentDashboardPage() {
         };
 
         try {
-        const res = await fetch('http://localhost:3000/api/children/my-children', { headers });
+        const res = await fetch(apiUrl('/children/my-children'), { headers });
         const data = await res.json();
         
         if (!res.ok || !data.success) {

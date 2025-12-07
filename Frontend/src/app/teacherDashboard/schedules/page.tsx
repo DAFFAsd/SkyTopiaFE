@@ -4,6 +4,7 @@ import Link from 'next/link';
 import PageHeader from '../../../components/PageHeader';
 import { useState, useEffect } from 'react';
 import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiLoader, FiBook } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Schedule {
     _id: string;
@@ -58,7 +59,7 @@ export default function SchedulesPage() {
 
     const fetchSchedules = async (token: string, userId: string | null) => {
         try {
-            const response = await fetch('http://localhost:3000/api/schedules', {
+            const response = await fetch(apiUrl('/schedules'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -85,7 +86,7 @@ export default function SchedulesPage() {
 
     const fetchCurriculum = async (token: string) => {
         try {
-            const response = await fetch('http://localhost:3000/api/curriculums', {
+            const response = await fetch(apiUrl('/curriculums'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
