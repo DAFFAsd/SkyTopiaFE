@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { User, UserFormData, UserRole } from '../types/user.types';
 import { Child } from '../types/child.types';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface UserFormModalProps {
     isOpen: boolean;
@@ -76,7 +77,7 @@ export default function UserFormModal({
         setLoadingChildren(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/api/children', {
+            const response = await fetch(apiUrl('/children'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

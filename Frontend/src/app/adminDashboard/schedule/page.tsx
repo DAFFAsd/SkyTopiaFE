@@ -90,8 +90,8 @@ export default function SchedulePage() {
       if (!token) throw new Error('Token tidak ditemukan');
 
       const url = chatThreadId 
-        ? `http://localhost:3000/api/chatbot/${chatThreadId}/message`
-        : 'http://localhost:3000/api/chatbot/new';
+        ? apiUrl(`/chatbot/${chatThreadId}/message`)
+        : apiUrl('/chatbot/new');
 
       const response = await fetch(url, {
         method: 'POST',
@@ -110,7 +110,7 @@ export default function SchedulePage() {
         }
 
         // Fetch chat history to get the AI response
-        const historyUrl = `http://localhost:3000/api/chatbot/history/${chatThreadId || data.thread_id}`;
+        const historyUrl = apiUrl(`/chatbot/history/${chatThreadId || data.thread_id}`);
         const historyResponse = await fetch(historyUrl, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
@@ -298,8 +298,8 @@ export default function SchedulePage() {
       }
 
       const url = editingItem
-        ? `http://localhost:3000/api/schedules/${editingItem._id}`
-        : `http://localhost:3000/api/schedules`;
+        ? apiUrl(`/schedules/${editingItem._id}`)
+        : apiUrl('/schedules');
       const method = editingItem ? 'PUT' : 'POST';
 
       const response = await fetch(url, {

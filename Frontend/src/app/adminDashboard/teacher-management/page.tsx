@@ -154,8 +154,8 @@ export default function TeacherManagementPage() {
       }
 
       const url = editingTeacher
-        ? `http://localhost:3000/api/users/${editingTeacher._id}`
-        : `http://localhost:3000/api/register`;
+        ? apiUrl(`/users/${editingTeacher._id}`)
+        : apiUrl('/register');
 
       const method = editingTeacher ? 'PUT' : 'POST';
 

@@ -2,7 +2,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Child, ChildFormData, Parent } from '../types/child.types';
+import { Child, ChildFormData } from '../types/child.types';
+import { apiUrl } from '@/lib/api';
+
+interface Parent {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+}
 
 interface ChildFormModalProps {
     isOpen: boolean;
@@ -70,7 +78,7 @@ export default function ChildFormModal({
         setLoadingParents(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/api/users', {
+            const response = await fetch(apiUrl('/users'), {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

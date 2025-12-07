@@ -7,6 +7,7 @@ import {
     FiArrowLeft, FiClock, FiCheckCircle, FiAlertCircle, 
     FiXCircle, FiEye, FiCheck, FiX, FiSend, 
 } from 'react-icons/fi';
+import { apiUrl } from '@/lib/api';
 
 interface Child {
     _id: string;
@@ -281,7 +282,7 @@ export default function AdminBillingPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token Admin tidak ditemukan.');
 
-            const childrenRes = await fetch('http://localhost:3000/api/children', { headers: { 'Authorization': `Bearer ${token}` } });
+            const childrenRes = await fetch(apiUrl('/children'), { headers: { 'Authorization': `Bearer ${token}` } });
             const childrenData = await childrenRes.json();
             if (childrenData.success) {
                 const transformedChildren: Child[] = childrenData.children.map((c: Record<string, unknown>) => ({
@@ -295,8 +296,8 @@ export default function AdminBillingPage() {
                 throw new Error(childrenData.message || 'Gagal mengambil data anak');
             }
 
-            const paymentsRes = await fetch(`http://localhost:3000/api/payments?limit=500`, { 
-                headers: { 'Authorization': `Bearer ${token}` },
+            const paymentsRes = await fetch(apiUrl('/payments?limit=500'), { 
+                headers: { 'Authorization': `Bearer ${token}` } 
             });
             const paymentsData = await paymentsRes.json();
             if (paymentsData.success) {
@@ -353,7 +354,7 @@ export default function AdminBillingPage() {
             const body: { status: string, rejection_reason?: string } = { status };
             if (status === 'Ditolak' && reason) { body.rejection_reason = reason; }
 
-            const response = await fetch(`http://localhost:3000/api/payments/${paymentId}/status`, {
+            const response = await fetch(apiUrl(`/payments/${paymentId}/status`), {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

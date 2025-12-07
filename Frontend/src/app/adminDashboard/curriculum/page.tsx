@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiArrowLeft } from 'react-icons/fi';
 import PageHeader from '../../../components/PageHeader';
+import { apiUrl } from '@/lib/api';
 
 interface Curriculum {
   _id: string;
@@ -83,8 +84,8 @@ export default function CurriculumPage() {
       }
 
       const url = editingItem
-        ? `http://localhost:3000/api/curriculums/${editingItem._id}`
-        : `http://localhost:3000/api/curriculums`;
+        ? apiUrl(`/curriculums/${editingItem._id}`)
+        : apiUrl('/curriculums');
       const method = editingItem ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
