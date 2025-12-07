@@ -111,7 +111,7 @@ function CreatePaymentForm({ childList, isLoadingChildren, onSuccess }: CreateFo
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token tidak ditemukan');
 
-            const response = await fetch('http://localhost:3000/api/payments', {
+            const response = await fetch(apiUrl('/payments'), {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

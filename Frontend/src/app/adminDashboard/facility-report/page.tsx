@@ -219,7 +219,7 @@ export default function FacilityReportPage() {
                     {condition.images.map((image, index) => (
                       <Image
                         key={index}
-                        src={`http://localhost:3000/${image}`}
+                        src={`${apiUrl('')}${image}`}
                         alt={`Condition ${index + 1}`}
                         width={80}
                         height={80}

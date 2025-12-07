@@ -34,7 +34,7 @@ export default function CurriculumPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/curriculums', {
+      const response = await fetch(apiUrl('/curriculums'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -122,7 +122,7 @@ export default function CurriculumPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/curriculums/${id}`, {
+      const response = await fetch(apiUrl(`/curriculums/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
