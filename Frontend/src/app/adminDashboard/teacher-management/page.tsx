@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiLoader, FiX, FiMail, FiPhone, FiArrowLeft, FiDownload, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import PageHeader from '../../../components/PageHeader';
+import { apiUrl } from '@/lib/api';
 
 interface Teacher {
   _id: string;
@@ -66,7 +67,7 @@ export default function TeacherManagementPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3000/api/users?role=Teacher', {
+      const response = await fetch(apiUrl('/users?role=Teacher'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -96,7 +97,7 @@ export default function TeacherManagementPage() {
       if (eDate) params.append('endDate', eDate);
       if (status && status !== 'all') params.append('status', status);
 
-      const response = await fetch(`http://localhost:3000/api/attendances?${params.toString()}`, {
+      const response = await fetch(apiUrl(`/attendances?${params.toString()}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -209,7 +210,7 @@ export default function TeacherManagementPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/users/${id}`, {
+      const response = await fetch(apiUrl(`/users/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -250,7 +251,7 @@ export default function TeacherManagementPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/attendances/${recordId}`, {
+      const response = await fetch(apiUrl(`/attendances/${recordId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -281,7 +282,7 @@ export default function TeacherManagementPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/attendances', {
+      const response = await fetch(apiUrl('/attendances'), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
