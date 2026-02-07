@@ -29,8 +29,11 @@ database.connectDB();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'http://localhost:3001',
-    methods: "GET,POST,PUT,DELETE",
+    origin: [
+        'http://localhost:3001',
+        'https://tamasya.x-intellitech.cloud'
+    ],
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
     credentials: true
 }));
 
