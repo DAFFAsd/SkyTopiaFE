@@ -53,8 +53,10 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/attendances', attendanceRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Start payment scheduler
-startScheduler(); 
+// Start payment scheduler (only in non-Vercel environments)
+if (!process.env.VERCEL) {
+    startScheduler();
+}
 
 // Handler handling for undefined routes
 app.use((req, res) => {
@@ -73,7 +75,12 @@ app.use((error, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+// Start server (only in non-Vercel environments)
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+}
+
+// Export for Vercel serverless
+module.exports = app;

@@ -174,3 +174,4 @@ exports.startScheduler = () => {
 
 exports.calculateManualDueDate = calculateManualDueDate;
 exports.checkAndUpdateOverdue = checkAndUpdateOverdue;
+exports.createRecurringPayments = createRecurringPayments;
